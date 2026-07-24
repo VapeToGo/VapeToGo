@@ -310,7 +310,42 @@ function deleteProductAdmin(id) {
 // ==========================================
 // 6️⃣ البدء عند تحميل الصفحة
 // ==========================================
+// استدعاء مكتبة Supabase
+const SUPABASE_URL = 'حط_هنا_الـ_Project_URL_بتاعك';
+const SUPABASE_ANON_KEY = 'حط_هنا_الـ_Publishable_key_بتاعك';
 
+const { createClient } = supabase;
+const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 1. جلب وعرض المنتجات لكل الزوار
+async function loadProducts() {
+    const { data, error } = await _supabase.from('Products').select('*');
+    if (error) {
+        console.error('خطأ في جلب المنتجات:', error);
+        return;
+    }
+    
+    // دالة العرض الخاصة بموقعك (عدلها حسب اسم الدالة عندك في الكود)
+    displayProducts(data);
+}
+
+// 2. حفظ منتج جديد من صفحة الأدمن في قاعدة البيانات
+async function addProductToSupabase(productData) {
+    const { data, error } = await _supabase
+        .from('Products')
+        .insert([productData]);
+
+    if (error) {
+        console.error('خطأ أثناء الحفظ:', error);
+        alert('حدث خطأ أثناء حفظ المنتج');
+    } else {
+        alert('تم حفظ المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
+        loadProducts();
+    }
+}
+
+// استدعاء المنتجات أول ما الصفحة تفتح
+document.addEventListener('DOMContentLoaded', loadProducts);
 document.addEventListener('DOMContentLoaded', () => {
   renderStoreProducts();
 });
