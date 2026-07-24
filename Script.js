@@ -1,14 +1,9 @@
 // ==========================================
-// 1️⃣ إعدادات واتصال Supabase
+// 1️⃣ إعدادات رابط Xano API
 // ==========================================
-const SUPABASE_URL = 'حط_هنا_الـ_Project_URL_بتاعك';
-const SUPABASE_ANON_KEY = 'حط_هنا_الـ_Publishable_key_بتاعك';
+const XANO_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:Koa_Bp1d'; 
 
-const { createClient } = supabase;
-const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// متغيرات عامة
-let products = []; // هتتملى من Supabase تلقائياً
+let products = [];
 let cart = JSON.parse(localStorage.getItem('my_store_cart')) || [];
 let orders = JSON.parse(localStorage.getItem('my_store_orders')) || [];
 
@@ -18,36 +13,31 @@ function saveData() {
 }
 
 // ==========================================
-// 2️⃣ التنقل بين الواجهات (Store / Admin)
+// 2️⃣ التنقل بين الواجهات
 // ==========================================
-
 function showSection(section) {
   document.getElementById('store-view').classList.add('hidden');
   document.getElementById('admin-view').classList.add('hidden');
 
   if (section === 'store') {
     document.getElementById('store-view').classList.remove('hidden');
-    loadProductsFromSupabase(); // جلب أحدث منتجات من القاعدة عند فتح المتجر
+    loadProductsFromXano();
   } else if (section === 'admin') {
     document.getElementById('admin-view').classList.remove('hidden');
   }
 }
 
 // ==========================================
-// 3️⃣ جلب وعرض المنتجات من Supabase
+// 3️⃣ جلب وعرض المنتجات من Xano
 // ==========================================
-
-async function loadProductsFromSupabase(filterCat = 'all') {
-  const { data, error } = await _supabase.from('Products').select('*');
-  
-  if (error) {
-    console.error('خطأ في جلب المنتجات:', error);
-    return;
+async function loadProductsFromXano(filterCat = 'all') {
+  try {
+    const response = await fetch(`${XANO_API_URL}/products`);
+    products = await response.json();
+    renderStoreProducts(filterCat);
+  } catch (error) {
+    console.error('خطأ في جلب المنتجات من Xano:', error);
   }
-  
-  // تحديث مصفوفة المنتجات بالبيانات الحقيقية من السيرفر
-  products = data || [];
-  renderStoreProducts(filterCat);
 }
 
 function renderStoreProducts(filterCat = 'all') {
@@ -101,9 +91,8 @@ function renderCategories() {
 }
 
 // ==========================================
-// 4️⃣ إدارة السلة وتأكيد الشراء (محلياً)
+// 4️⃣ إدارة السلة (محلياً)
 // ==========================================
-
 function addToCart(productId) {
   const prod = products.find(p => p.id == productId);
   if (!prod) return;
@@ -210,9 +199,8 @@ function submitOrder() {
 }
 
 // ==========================================
-// 5️⃣ لوحة تحكم الأدمن (مع ربط Supabase)
+// 5️⃣ لوحة تحكم الأدمن (مع ربط Xano)
 // ==========================================
-
 function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value;
   if (pass === '123456') {
@@ -230,9 +218,12 @@ function logoutAdmin() {
 }
 
 async function renderAdminPanel() {
-  // جلب أحدث البيانات لعرضها في لوحة التحكم
-  const { data, error } = await _supabase.from('Products').select('*');
-  if (!error) products = data || [];
+  try {
+    const response = await fetch(`${XANO_API_URL}/products`);
+    products = await response.json();
+  } catch (e) {
+    console.error(e);
+  }
 
   const tableBody = document.getElementById('admin-products-table-body');
   if (tableBody) {
@@ -251,7 +242,6 @@ async function renderAdminPanel() {
     `).join('');
   }
 
-  // قائمة الطلبات الواردة
   const ordersList = document.getElementById('admin-orders-list');
   if (ordersList) {
     ordersList.innerHTML = orders.length === 0 ? `<p class="text-xs text-gray-500">لا توجد طلبات واردة حتى الآن.</p>` :
@@ -289,43 +279,46 @@ async function addNewProduct() {
     description: desc
   };
 
-  // إرسال المنتج مباشرة إلى قاعدة بيانات Supabase الحقيقية
-  const { data, error } = await _supabase.from('Products').insert([newP]).select();
+  try {
+    const response = await fetch(`${XANO_API_URL}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newP)
+    });
 
-  if (error) {
+    if (!response.ok) throw new Error('فشل الحفظ');
+
+    alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
+
+    document.getElementById('new-p-name').value = '';
+    document.getElementById('new-p-price').value = '';
+    document.getElementById('new-p-category').value = '';
+    document.getElementById('new-p-img').value = '';
+    document.getElementById('new-p-desc').value = '';
+
+    renderAdminPanel();
+  } catch (error) {
     console.error('خطأ في الإضافة:', error);
-    alert('حدث خطأ أثناء حفظ المنتج في قاعدة البيانات!');
-    return;
+    alert('حدث خطأ أثناء حفظ المنتج!');
   }
-
-  alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
-
-  // تفريغ الحقول
-  document.getElementById('new-p-name').value = '';
-  document.getElementById('new-p-price').value = '';
-  document.getElementById('new-p-category').value = '';
-  document.getElementById('new-p-img').value = '';
-  document.getElementById('new-p-desc').value = '';
-
-  renderAdminPanel();
 }
 
 async function deleteProductAdmin(id) {
   if (confirm('هل ترغب بحذف هذا المنتج؟')) {
-    const { error } = await _supabase.from('Products').delete().eq('id', id);
-
-    if (error) {
-      alert('خطأ أثناء الحذف من القاعدة!');
-      return;
+    try {
+      await fetch(`${XANO_API_URL}/products/${id}`, {
+        method: 'DELETE'
+      });
+      renderAdminPanel();
+    } catch (error) {
+      alert('خطأ أثناء الحذف!');
     }
-
-    renderAdminPanel();
   }
 }
 
 // ==========================================
-// 6️⃣ التشغيل عند فتح الصفحة
+// 6️⃣ البدء عند تحميل الصفحة
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  loadProductsFromSupabase();
+  loadProductsFromXano();
 });
