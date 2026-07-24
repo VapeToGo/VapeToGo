@@ -1,14 +1,12 @@
 // ==========================================
-// 🚀 VapeToGo - Google Sheets Cloud System (No LocalStorage)
+// 🚀 VapeToGo - Google Sheets Get API System
 // ==========================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSg6272sIf4NyyT329D3-FCJMpAvfn4kdnCtq_XsvTllyKzE3M6XZYfjDexshz4JSUOg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEuohhs-0tT0pqoSFobIpYmD-A1UV7acOd0NjsId3AqHjpKdHG0V5lK7T7fOxIG4dR/exec';
 
 let products = [];
-let cart = []; // السلة هتكون مؤقتة في الجلسة أو تدار بالكلاود حسب رغبتك، ومفيش تخزين محلي دائم.
+let cart = [];
 
-// ==========================================
-// 1️⃣ جلب المنتجات من Google Sheets
-// ==========================================
+// جلب المنتجات
 async function loadCloudProducts() {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
@@ -16,13 +14,10 @@ async function loadCloudProducts() {
     products = Array.isArray(data) ? data : [];
     renderStoreProducts('all');
   } catch (error) {
-    console.error('خطأ في جلب المنتجات من السحاب:', error);
+    console.error('خطأ في جلب المنتجات:', error);
   }
 }
 
-// ==========================================
-// 2️⃣ التنقل بين الواجهات
-// ==========================================
 function showSection(section) {
   document.getElementById('store-view').classList.add('hidden');
   document.getElementById('admin-view').classList.add('hidden');
@@ -36,9 +31,6 @@ function showSection(section) {
   }
 }
 
-// ==========================================
-// 3️⃣ عرض المنتجات والفلاتر في المتجر
-// ==========================================
 function renderStoreProducts(filterCat = 'all') {
   const grid = document.getElementById('products-grid');
   if (!grid) return;
@@ -89,9 +81,6 @@ function renderCategories() {
   `).join('');
 }
 
-// ==========================================
-// 4️⃣ إدارة سلة المشتريات (جلسة مؤقتة بدون تخزين محلي دائم)
-// ==========================================
 function addToCart(productId) {
   const prod = products.find(p => p.id == productId);
   if (!prod) return;
@@ -116,7 +105,7 @@ function updateCartUI() {
   countSpan.innerText = cart.reduce((acc, item) => acc + (Number(item.qty) || 1), 0);
 
   if (cart.length === 0) {
-    cartContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-8">السلة فارغة حالياً.</p>";
+    cartContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-8">السلة فارغة حالياً.</p>`;
     totalSpan.innerText = '0 ج.م';
     return;
   }
@@ -180,16 +169,12 @@ function submitOrder() {
 
   if (!name || !phone || !address) return alert('يرجى ملء جميع بيانات الشحن!');
 
-  // إرسال الطلب عبر واتساب أو تفريغ السلة مباشرة
   alert(`🎉 شكرًا لك ${name}! تم إرسال طلبك بنجاح.`);
   cart = [];
   closeCheckoutModal();
   updateCartUI();
 }
 
-// ==========================================
-// 5️⃣ لوحة تحكم الأدمن (مرتبطة مباشرة بـ Google Sheets)
-// ==========================================
 function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value;
   if (pass === '123456') {
@@ -227,28 +212,16 @@ async function renderAdminPanel() {
 }
 
 async function addNewProduct() {
-  const name = document.getElementById('new-p-name').value.trim();
-  const price = parseFloat(document.getElementById('new-p-price').value);
-  const category = document.getElementById('new-p-category').value.trim();
-  const img = document.getElementById('new-p-img').value.trim();
-  const desc = document.getElementById('new-p-desc').value.trim();
+  const name = encodeURIComponent(document.getElementById('new-p-name').value.trim());
+  const price = encodeURIComponent(document.getElementById('new-p-price').value);
+  const category = encodeURIComponent(document.getElementById('new-p-category').value.trim() || 'عام');
+  const img = encodeURIComponent(document.getElementById('new-p-img').value.trim() || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80');
+  const desc = encodeURIComponent(document.getElementById('new-p-desc').value.trim());
 
   if (!name || isNaN(price)) return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
 
-  const newP = {
-    action: "addProduct",
-    name,
-    price,
-    category: category || 'عام',
-    img: img || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80',
-    desc
-  };
-
   try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(newP)
-    });
+    const response = await fetch(`${SCRIPT_URL}?action=addProduct&name=${name}&price=${price}&category=${category}&img=${img}&desc=${desc}`);
     const result = await response.json();
 
     if (result.status === 'success') {
@@ -270,10 +243,7 @@ async function addNewProduct() {
 async function deleteProductAdmin(id) {
   if (confirm('هل ترغب بحذف هذا المنتج نهائياً من ملف الإكسيل؟')) {
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: "deleteProduct", id: id })
-      });
+      const response = await fetch(`${SCRIPT_URL}?action=deleteProduct&id=${id}`);
       const result = await response.json();
       if (result.status === 'deleted') {
         renderAdminPanel();
@@ -286,9 +256,6 @@ async function deleteProductAdmin(id) {
   }
 }
 
-// ==========================================
-// 🚀 التشغيل التلقائي
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   loadCloudProducts();
 });
