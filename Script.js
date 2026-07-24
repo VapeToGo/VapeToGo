@@ -1,5 +1,5 @@
 // ==========================================
-// 🚀 إعدادات رابط Xano API السحابي الشامل
+// 🚀 VapeToGo - Cloud-Only System (No LocalStorage)
 // ==========================================
 const XANO_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:Koa_Bp1d'; 
 
@@ -8,7 +8,7 @@ let cart = [];
 let orders = [];
 
 // ==========================================
-// 2️⃣ التنقل بين الواجهات وجلب البيانات من الكلاود
+// 1️⃣ التنقل بين الواجهات وجلب البيانات
 // ==========================================
 function showSection(section) {
   document.getElementById('store-view').classList.add('hidden');
@@ -16,31 +16,38 @@ function showSection(section) {
 
   if (section === 'store') {
     document.getElementById('store-view').classList.remove('hidden');
-    loadStoreDataFromCloud();
+    loadCloudData();
   } else if (section === 'admin') {
     document.getElementById('admin-view').classList.remove('hidden');
     renderAdminPanel();
   }
 }
 
-async function loadStoreDataFromCloud() {
+async function loadCloudData() {
   try {
-    // جلب المنتجات والسلة من السحاب مباشرة
     const [prodRes, cartRes] = await Promise.all([
       fetch(`${XANO_API_URL}/products`),
       fetch(`${XANO_API_URL}/cart`).catch(() => ({ json: () => [] }))
     ]);
     
     products = await prodRes.json();
-    try { cart = await cartRes.json(); } catch(e) { cart = []; }
+    try { 
+      const cartData = await cartRes.json();
+      cart = Array.isArray(cartData) ? cartData : [];
+    } catch(e) { 
+      cart = []; 
+    }
     
     renderStoreProducts('all');
     updateCartUI();
   } catch (error) {
-    console.error('خطأ في جلب البيانات من الكلاود:', error);
+    console.error('خطأ في الاتصال بالسيرفر السحابي:', error);
   }
 }
 
+// ==========================================
+// 2️⃣ عرض المنتجات والفلاتر
+// ==========================================
 function renderStoreProducts(filterCat = 'all') {
   const grid = document.getElementById('products-grid');
   if (!grid) return;
@@ -92,7 +99,7 @@ function renderCategories() {
 }
 
 // ==========================================
-// 🛒 إدارة السلة على الكلاود مباشرة
+// 3️⃣ إدارة السلة (على السيرفر السحابي)
 // ==========================================
 async function addToCloudCart(productId) {
   const prod = products.find(p => p.id == productId);
@@ -103,20 +110,22 @@ async function addToCloudCart(productId) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        product_id: prod.id,
+        product_id: String(prod.id),
         name: prod.name,
-        price: prod.price,
-        img: prod.img,
+        price: Number(prod.price),
+        img: prod.img || '',
         qty: 1
       })
     });
     
     if(response.ok) {
-      loadStoreDataFromCloud();
+      await loadCloudData();
       toggleCart(true);
+    } else {
+      alert('فشل إضافة المنتج للسلة!');
     }
   } catch (e) {
-    console.error('خطأ في إضافة السلة للكلاود', e);
+    console.error('خطأ في إضافة السلة:', e);
   }
 }
 
@@ -126,7 +135,7 @@ function updateCartUI() {
   const totalSpan = document.getElementById('cart-total-price');
   if (!cartContainer) return;
 
-  countSpan.innerText = cart.reduce((acc, item) => acc + (item.qty || 1), 0);
+  countSpan.innerText = cart.reduce((acc, item) => acc + (Number(item.qty) || 1), 0);
 
   if (cart.length === 0) {
     cartContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-8">السلة فارغة حالياً.</p>`;
@@ -136,14 +145,16 @@ function updateCartUI() {
 
   let total = 0;
   cartContainer.innerHTML = cart.map(item => {
-    total += (item.price || 0) * (item.qty || 1);
+    const itemPrice = Number(item.price) || 0;
+    const itemQty = Number(item.qty) || 1;
+    total += itemPrice * itemQty;
     return `
       <div class="flex items-center justify-between bg-gray-800/60 p-2.5 rounded-xl border border-gray-700 text-xs">
         <div class="flex items-center gap-2">
-          <img src="${item.img}" class="w-10 h-10 object-cover rounded-lg">
+          <img src="${item.img || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-cover rounded-lg">
           <div>
             <div class="font-bold text-gray-200">${item.name}</div>
-            <div class="text-amber-400 font-bold">${item.price} ج.م × ${item.qty || 1}</div>
+            <div class="text-amber-400 font-bold">${itemPrice} ج.م × ${itemQty}</div>
           </div>
         </div>
         <button onclick="removeFromCloudCart('${item.id}')" class="text-red-400 hover:text-red-300 p-1"><i class="fa-solid fa-trash"></i></button>
@@ -157,7 +168,7 @@ function updateCartUI() {
 async function removeFromCloudCart(id) {
   try {
     await fetch(`${XANO_API_URL}/cart/${id}`, { method: 'DELETE' });
-    loadStoreDataFromCloud();
+    await loadCloudData();
   } catch(e) {
     console.error('خطأ في الحذف من السلة', e);
   }
@@ -195,12 +206,14 @@ async function submitOrder() {
 
   if (!name || !phone || !address) return alert('يرجى ملء جميع البيانات!');
 
+  const orderTotal = cart.reduce((acc, i) => acc + ((Number(i.price) || 0) * (Number(i.qty) || 1)), 0);
+
   const newOrder = {
     customer_name: name,
     customer_phone: phone,
     customer_address: address,
     items: cart,
-    total: cart.reduce((acc, i) => acc + ((i.price || 0) * (i.qty || 1)), 0),
+    total: orderTotal,
     date: new Date().toLocaleString('ar-EG')
   };
 
@@ -212,22 +225,24 @@ async function submitOrder() {
     });
 
     if (response.ok) {
-      // تفريغ السلة من الكلاود بعد الطلب
+      // تفريغ السلة من الكلاود بعد تأكيد الطلب
       for(let item of cart) {
-        await fetch(`${XANO_API_URL}/cart/${item.id}`, { method: 'DELETE' });
+        await fetch(`${XANO_API_URL}/cart/${item.id}`, { method: 'DELETE' }).catch(() => {});
       }
       
       closeCheckoutModal();
-      loadStoreDataFromCloud();
+      await loadCloudData();
       alert(`🎉 تم إرسال طلبك وحفظه على الكلاود بنجاح!`);
+    } else {
+      alert('حدث خطأ أثناء إرسال الطلب!');
     }
-  } catch (error) {
-    alert('حدث خطأ أثناء إرسال الطلب!');
+  }  catch (error) {
+    alert('حدث خطأ في الاتصال بالخادم!');
   }
 }
 
 // ==========================================
-// 🛠️ لوحة تحكم الأدمن (سحابية بالكامل)
+// 4️⃣ لوحة تحكم الأدمن (سحابية بالكامل)
 // ==========================================
 function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value;
@@ -253,7 +268,12 @@ async function renderAdminPanel() {
     ]);
     
     products = await prodRes.json();
-    try { orders = await ordersRes.json(); } catch(e) { orders = []; }
+    try { 
+      const ordersData = await ordersRes.json();
+      orders = Array.isArray(ordersData) ? ordersData : [];
+    } catch(e) { 
+      orders = []; 
+    }
   } catch (e) {
     console.error(e);
   }
@@ -318,7 +338,7 @@ async function addNewProduct() {
 
     if (!response.ok) throw new Error('فشل الحفظ');
 
-    alert('✅ تم حفظ المنتج في الكلاود بنجاح!');
+    alert('✅ تم حفظ المنتج في السيرفر السحابي بنجاح!');
 
     document.getElementById('new-p-name').value = '';
     document.getElementById('new-p-price').value = '';
@@ -333,7 +353,7 @@ async function addNewProduct() {
 }
 
 async function deleteProductAdmin(id) {
-  if (confirm('هل ترغب بحذف هذا المنتج من الكلاود؟')) {
+  if (confirm('هل ترغب بحذف هذا المنتج نهائياً من السيرفر؟')) {
     try {
       await fetch(`${XANO_API_URL}/products/${id}`, { method: 'DELETE' });
       renderAdminPanel();
@@ -344,8 +364,8 @@ async function deleteProductAdmin(id) {
 }
 
 // ==========================================
-// 🚀 التشغيل المباشر
+// 5️⃣ التشغيل التلقائي عند فتح الموقع
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  loadStoreDataFromCloud();
+  loadCloudData();
 });
