@@ -1,13 +1,14 @@
 // ==========================================
-// 1️⃣ إعدادات رابط Xano API
+// 1️⃣ إعدادات رابط Xano API السحابي
 // ==========================================
 const XANO_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:Koa_Bp1d'; 
 
 let products = [];
+// السلة والطلبات فقط هي التي تبقى محلياً لتجربة مستخدم سريعة
 let cart = JSON.parse(localStorage.getItem('my_store_cart')) || [];
 let orders = JSON.parse(localStorage.getItem('my_store_orders')) || [];
 
-function saveData() {
+function saveCartAndOrders() {
   localStorage.setItem('my_store_cart', JSON.stringify(cart));
   localStorage.setItem('my_store_orders', JSON.stringify(orders));
 }
@@ -24,11 +25,12 @@ function showSection(section) {
     loadProductsFromXano();
   } else if (section === 'admin') {
     document.getElementById('admin-view').classList.remove('hidden');
+    renderAdminPanel();
   }
 }
 
 // ==========================================
-// 3️⃣ جلب وعرض المنتجات من Xano
+// 3️⃣ جلب وعرض المنتجات من سحاب Xano
 // ==========================================
 async function loadProductsFromXano(filterCat = 'all') {
   try {
@@ -36,7 +38,7 @@ async function loadProductsFromXano(filterCat = 'all') {
     products = await response.json();
     renderStoreProducts(filterCat);
   } catch (error) {
-    console.error('خطأ في جلب المنتجات من Xano:', error);
+    console.error('خطأ في جلب المنتجات من قاعدة البيانات:', error);
   }
 }
 
@@ -48,7 +50,7 @@ function renderStoreProducts(filterCat = 'all') {
   const filtered = filterCat === 'all' ? products : products.filter(p => p.category === filterCat);
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 text-xs">لا توجد منتجات في هذا القسم.</div>`;
+    grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 text-xs">لا توجد منتجات في هذا القسم حالياً.</div>`;
     renderCategories();
     return;
   }
@@ -91,7 +93,7 @@ function renderCategories() {
 }
 
 // ==========================================
-// 4️⃣ إدارة السلة (محلياً)
+// 4️⃣ إدارة السلة
 // ==========================================
 function addToCart(productId) {
   const prod = products.find(p => p.id == productId);
@@ -104,7 +106,7 @@ function addToCart(productId) {
     cart.push({ ...prod, qty: 1 });
   }
 
-  saveData();
+  saveCartAndOrders();
   updateCartUI();
   toggleCart(true);
 }
@@ -145,7 +147,7 @@ function updateCartUI() {
 
 function removeFromCart(id) {
   cart = cart.filter(c => c.id != id);
-  saveData();
+  saveCartAndOrders();
   updateCartUI();
 }
 
@@ -191,7 +193,7 @@ function submitOrder() {
 
   orders.push(newOrder);
   cart = [];
-  saveData();
+  saveCartAndOrders();
   closeCheckoutModal();
   updateCartUI();
 
@@ -199,7 +201,7 @@ function submitOrder() {
 }
 
 // ==========================================
-// 5️⃣ لوحة تحكم الأدمن (مع ربط Xano)
+// 5️⃣ لوحة تحكم الأدمن (متصلة بقاعدة البيانات مباشرة)
 // ==========================================
 function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value;
@@ -218,25 +220,20 @@ function logoutAdmin() {
 }
 
 async function renderAdminPanel() {
-  try {
-    const response = await fetch(`${XANO_API_URL}/products`);
-    products = await response.json();
-  } catch (e) {
-    console.error(e);
-  }
+  await loadProductsFromXano();
 
   const tableBody = document.getElementById('admin-products-table-body');
   if (tableBody) {
     tableBody.innerHTML = products.map(p => `
-      <tr class="hover:bg-gray-800/40">
+      <tr class="hover:bg-gray-800/40 border-b border-gray-800">
         <td class="p-3 flex items-center gap-2">
           <img src="${p.img}" class="w-8 h-8 rounded object-cover">
-          <span class="font-bold">${p.name}</span>
+          <span class="font-bold text-gray-200">${p.name}</span>
         </td>
-        <td class="p-3">${p.category || '-'}</td>
+        <td class="p-3 text-gray-300">${p.category || '-'}</td>
         <td class="p-3 font-bold text-amber-400">${p.price} ج.م</td>
         <td class="p-3">
-          <button onclick="deleteProductAdmin('${p.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all">حذف</button>
+          <button onclick="deleteProductAdmin('${p.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all text-xs">حذف</button>
         </td>
       </tr>
     `).join('');
@@ -286,9 +283,9 @@ async function addNewProduct() {
       body: JSON.stringify(newP)
     });
 
-    if (!response.ok) throw new Error('فشل الحفظ');
+    if (!response.ok) throw new Error('فشل الحفظ في السيرفر');
 
-    alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
+    alert('✅ تم حفظ المنتج في قاعدة البيانات السحابية بنجاح!');
 
     document.getElementById('new-p-name').value = '';
     document.getElementById('new-p-price').value = '';
@@ -299,12 +296,12 @@ async function addNewProduct() {
     renderAdminPanel();
   } catch (error) {
     console.error('خطأ في الإضافة:', error);
-    alert('حدث خطأ أثناء حفظ المنتج!');
+    alert('حدث خطأ أثناء حفظ المنتج في قاعدة البيانات!');
   }
 }
 
 async function deleteProductAdmin(id) {
-  if (confirm('هل ترغب بحذف هذا المنتج؟')) {
+  if (confirm('هل ترغب بحذف هذا المنتج نهائياً من السيرفر؟')) {
     try {
       await fetch(`${XANO_API_URL}/products/${id}`, {
         method: 'DELETE'
@@ -317,7 +314,7 @@ async function deleteProductAdmin(id) {
 }
 
 // ==========================================
-// 6️⃣ البدء عند تحميل الصفحة
+// 6️⃣ التشغيل التلقائي عند فتح الموقع
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   loadProductsFromXano();
