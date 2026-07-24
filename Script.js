@@ -1,40 +1,18 @@
 // ==========================================
-// 1️⃣ البيانات المبدئية والتهيئة
+// 1️⃣ إعدادات واتصال Supabase
 // ==========================================
+const SUPABASE_URL = 'حط_هنا_الـ_Project_URL_بتاعك';
+const SUPABASE_ANON_KEY = 'حط_هنا_الـ_Publishable_key_بتاعك';
 
-const initialProducts = [
-  { 
-    id: '1', 
-    name: 'جهاز فيب احترافي X-Pro', 
-    price: 1450, 
-    category: 'أجهزة', 
-    img: 'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=400&q=80', 
-    desc: 'جهاز بقدرة عالية مع بطارية تدوم طويلاً.' 
-  },
-  { 
-    id: '2', 
-    name: 'سائل نكهة الفواكه 60ml', 
-    price: 320, 
-    category: 'سوائل', 
-    img: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80', 
-    desc: 'نكهة مركزة وطبيعية للغاية.' 
-  },
-  { 
-    id: '3', 
-    name: 'بود سيستم صغير Mini V', 
-    price: 890, 
-    category: 'أجهزة', 
-    img: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=400&q=80', 
-    desc: 'تصميم أنيق وخفيف الوزن للتنقل.' 
-  }
-];
+const { createClient } = supabase;
+const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let products = JSON.parse(localStorage.getItem('my_store_products')) || initialProducts;
+// متغيرات عامة
+let products = []; // هتتملى من Supabase تلقائياً
 let cart = JSON.parse(localStorage.getItem('my_store_cart')) || [];
 let orders = JSON.parse(localStorage.getItem('my_store_orders')) || [];
 
 function saveData() {
-  localStorage.setItem('my_store_products', JSON.stringify(products));
   localStorage.setItem('my_store_cart', JSON.stringify(cart));
   localStorage.setItem('my_store_orders', JSON.stringify(orders));
 }
@@ -49,24 +27,39 @@ function showSection(section) {
 
   if (section === 'store') {
     document.getElementById('store-view').classList.remove('hidden');
-    renderStoreProducts();
+    loadProductsFromSupabase(); // جلب أحدث منتجات من القاعدة عند فتح المتجر
   } else if (section === 'admin') {
     document.getElementById('admin-view').classList.remove('hidden');
   }
 }
 
 // ==========================================
-// 3️⃣ واجهة عرض المنتجات والأقسام
+// 3️⃣ جلب وعرض المنتجات من Supabase
 // ==========================================
+
+async function loadProductsFromSupabase(filterCat = 'all') {
+  const { data, error } = await _supabase.from('Products').select('*');
+  
+  if (error) {
+    console.error('خطأ في جلب المنتجات:', error);
+    return;
+  }
+  
+  // تحديث مصفوفة المنتجات بالبيانات الحقيقية من السيرفر
+  products = data || [];
+  renderStoreProducts(filterCat);
+}
 
 function renderStoreProducts(filterCat = 'all') {
   const grid = document.getElementById('products-grid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   const filtered = filterCat === 'all' ? products : products.filter(p => p.category === filterCat);
 
   if (filtered.length === 0) {
     grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 text-xs">لا توجد منتجات في هذا القسم.</div>`;
+    renderCategories();
     return;
   }
 
@@ -80,7 +73,7 @@ function renderStoreProducts(filterCat = 'all') {
           </div>
           <div class="p-3.5 space-y-1.5">
             <h3 class="font-bold text-xs text-gray-100 line-clamp-1">${p.name}</h3>
-            <p class="text-[10px] text-gray-400 line-clamp-2">${p.desc || ''}</p>
+            <p class="text-[10px] text-gray-400 line-clamp-2">${p.description || p.desc || ''}</p>
           </div>
         </div>
         <div class="p-3.5 pt-0 flex items-center justify-between">
@@ -99,6 +92,7 @@ function renderStoreProducts(filterCat = 'all') {
 function renderCategories() {
   const categories = ['all', ...new Set(products.map(p => p.category).filter(Boolean))];
   const container = document.getElementById('category-filters');
+  if (!container) return;
   container.innerHTML = categories.map(cat => `
     <button onclick="renderStoreProducts('${cat}')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold px-4 py-2 rounded-xl whitespace-nowrap border border-gray-700">
       ${cat === 'all' ? 'الكل' : cat}
@@ -107,14 +101,14 @@ function renderCategories() {
 }
 
 // ==========================================
-// 4️⃣ إدارة السلة وتأكيد الشراء
+// 4️⃣ إدارة السلة وتأكيد الشراء (محلياً)
 // ==========================================
 
 function addToCart(productId) {
-  const prod = products.find(p => p.id === productId);
+  const prod = products.find(p => p.id == productId);
   if (!prod) return;
 
-  const item = cart.find(c => c.id === productId);
+  const item = cart.find(c => c.id == productId);
   if (item) {
     item.qty++;
   } else {
@@ -130,6 +124,7 @@ function updateCartUI() {
   const cartContainer = document.getElementById('cart-items');
   const countSpan = document.getElementById('cart-count');
   const totalSpan = document.getElementById('cart-total-price');
+  if (!cartContainer) return;
 
   countSpan.innerText = cart.reduce((acc, item) => acc + item.qty, 0);
 
@@ -160,13 +155,14 @@ function updateCartUI() {
 }
 
 function removeFromCart(id) {
-  cart = cart.filter(c => c.id !== id);
+  cart = cart.filter(c => c.id != id);
   saveData();
   updateCartUI();
 }
 
 function toggleCart(forceOpen = false) {
   const drawer = document.getElementById('cart-drawer');
+  if (!drawer) return;
   if (forceOpen) {
     drawer.classList.remove('hidden');
     drawer.classList.add('flex');
@@ -214,7 +210,7 @@ function submitOrder() {
 }
 
 // ==========================================
-// 5️⃣ لوحة تحكم الأدمن
+// 5️⃣ لوحة تحكم الأدمن (مع ربط Supabase)
 // ==========================================
 
 function loginAdmin() {
@@ -233,43 +229,50 @@ function logoutAdmin() {
   document.getElementById('admin-panel').classList.add('hidden');
 }
 
-function renderAdminPanel() {
-  // جدول المنتجات
+async function renderAdminPanel() {
+  // جلب أحدث البيانات لعرضها في لوحة التحكم
+  const { data, error } = await _supabase.from('Products').select('*');
+  if (!error) products = data || [];
+
   const tableBody = document.getElementById('admin-products-table-body');
-  tableBody.innerHTML = products.map(p => `
-    <tr class="hover:bg-gray-800/40">
-      <td class="p-3 flex items-center gap-2">
-        <img src="${p.img}" class="w-8 h-8 rounded object-cover">
-        <span class="font-bold">${p.name}</span>
-      </td>
-      <td class="p-3">${p.category || '-'}</td>
-      <td class="p-3 font-bold text-amber-400">${p.price} ج.م</td>
-      <td class="p-3">
-        <button onclick="deleteProductAdmin('${p.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all">حذف</button>
-      </td>
-    </tr>
-  `).join('');
+  if (tableBody) {
+    tableBody.innerHTML = products.map(p => `
+      <tr class="hover:bg-gray-800/40">
+        <td class="p-3 flex items-center gap-2">
+          <img src="${p.img}" class="w-8 h-8 rounded object-cover">
+          <span class="font-bold">${p.name}</span>
+        </td>
+        <td class="p-3">${p.category || '-'}</td>
+        <td class="p-3 font-bold text-amber-400">${p.price} ج.م</td>
+        <td class="p-3">
+          <button onclick="deleteProductAdmin('${p.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all">حذف</button>
+        </td>
+      </tr>
+    `).join('');
+  }
 
   // قائمة الطلبات الواردة
   const ordersList = document.getElementById('admin-orders-list');
-  ordersList.innerHTML = orders.length === 0 ? `<p class="text-xs text-gray-500">لا توجد طلبات واردة حتى الآن.</p>` :
-    orders.map(o => `
-      <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700 space-y-2 text-xs">
-        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-          <span class="font-bold text-amber-400">${o.id}</span>
-          <span class="text-gray-400">${o.date}</span>
+  if (ordersList) {
+    ordersList.innerHTML = orders.length === 0 ? `<p class="text-xs text-gray-500">لا توجد طلبات واردة حتى الآن.</p>` :
+      orders.map(o => `
+        <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700 space-y-2 text-xs">
+          <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+            <span class="font-bold text-amber-400">${o.id}</span>
+            <span class="text-gray-400">${o.date}</span>
+          </div>
+          <div><strong>العميل:</strong> ${o.customer.name} | ${o.customer.phone}</div>
+          <div><strong>العنوان:</strong> ${o.customer.address}</div>
+          <div class="bg-gray-900 p-2 rounded-lg space-y-1 my-1">
+            ${o.items.map(i => `<div>• ${i.name} (×${i.qty}) - ${i.price * i.qty} ج.م</div>`).join('')}
+          </div>
+          <div class="text-left font-extrabold text-amber-400 text-sm">الإجمالي: ${o.total} ج.م</div>
         </div>
-        <div><strong>العميل:</strong> ${o.customer.name} | ${o.customer.phone}</div>
-        <div><strong>العنوان:</strong> ${o.customer.address}</div>
-        <div class="bg-gray-900 p-2 rounded-lg space-y-1 my-1">
-          ${o.items.map(i => `<div>• ${i.name} (×${i.qty}) - ${i.price * i.qty} ج.م</div>`).join('')}
-        </div>
-        <div class="text-left font-extrabold text-amber-400 text-sm">الإجمالي: ${o.total} ج.م</div>
-      </div>
-    `).join('');
+      `).join('');
+  }
 }
 
-function addNewProduct() {
+async function addNewProduct() {
   const name = document.getElementById('new-p-name').value.trim();
   const price = parseFloat(document.getElementById('new-p-price').value);
   const category = document.getElementById('new-p-category').value.trim();
@@ -279,73 +282,50 @@ function addNewProduct() {
   if (!name || isNaN(price)) return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
 
   const newP = {
-    id: Date.now().toString(),
     name,
     price,
     category: category || 'عام',
     img: img || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80',
-    desc
+    description: desc
   };
 
-  products.push(newP);
-  saveData();
-  renderAdminPanel();
-  alert('✅ تم إضافة المنتج بنجاح!');
+  // إرسال المنتج مباشرة إلى قاعدة بيانات Supabase الحقيقية
+  const { data, error } = await _supabase.from('Products').insert([newP]).select();
 
+  if (error) {
+    console.error('خطأ في الإضافة:', error);
+    alert('حدث خطأ أثناء حفظ المنتج في قاعدة البيانات!');
+    return;
+  }
+
+  alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
+
+  // تفريغ الحقول
   document.getElementById('new-p-name').value = '';
   document.getElementById('new-p-price').value = '';
   document.getElementById('new-p-category').value = '';
   document.getElementById('new-p-img').value = '';
   document.getElementById('new-p-desc').value = '';
+
+  renderAdminPanel();
 }
 
-function deleteProductAdmin(id) {
+async function deleteProductAdmin(id) {
   if (confirm('هل ترغب بحذف هذا المنتج؟')) {
-    products = products.filter(p => p.id !== id);
-    saveData();
+    const { error } = await _supabase.from('Products').delete().eq('id', id);
+
+    if (error) {
+      alert('خطأ أثناء الحذف من القاعدة!');
+      return;
+    }
+
     renderAdminPanel();
   }
 }
 
 // ==========================================
-// 6️⃣ البدء عند تحميل الصفحة
+// 6️⃣ التشغيل عند فتح الصفحة
 // ==========================================
-// استدعاء مكتبة Supabase
-const SUPABASE_URL = 'حط_هنا_الـ_Project_URL_بتاعك';
-const SUPABASE_ANON_KEY = 'حط_هنا_الـ_Publishable_key_بتاعك';
-
-const { createClient } = supabase;
-const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// 1. جلب وعرض المنتجات لكل الزوار
-async function loadProducts() {
-    const { data, error } = await _supabase.from('Products').select('*');
-    if (error) {
-        console.error('خطأ في جلب المنتجات:', error);
-        return;
-    }
-    
-    // دالة العرض الخاصة بموقعك (عدلها حسب اسم الدالة عندك في الكود)
-    displayProducts(data);
-}
-
-// 2. حفظ منتج جديد من صفحة الأدمن في قاعدة البيانات
-async function addProductToSupabase(productData) {
-    const { data, error } = await _supabase
-        .from('Products')
-        .insert([productData]);
-
-    if (error) {
-        console.error('خطأ أثناء الحفظ:', error);
-        alert('حدث خطأ أثناء حفظ المنتج');
-    } else {
-        alert('تم حفظ المنتج بنجاح وأصبح متاحاً لكل الأجهزة!');
-        loadProducts();
-    }
-}
-
-// استدعاء المنتجات أول ما الصفحة تفتح
-document.addEventListener('DOMContentLoaded', loadProducts);
 document.addEventListener('DOMContentLoaded', () => {
-  renderStoreProducts();
+  loadProductsFromSupabase();
 });
