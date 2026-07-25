@@ -22,7 +22,7 @@
             <div class="flex items-center gap-2 cursor-pointer" onclick="showSection('store')">
                 <span class="text-xl font-black tracking-wider text-amber-500">VAPE<span class="text-white">TOGO</span></span>
             </div>
-            
+
             <div class="flex items-center gap-3">
                 <button onclick="showSection('store')" class="text-xs font-semibold text-gray-300 hover:text-amber-400 transition-all">المتجر</button>
                 <button onclick="showSection('admin')" class="text-xs font-semibold text-gray-300 hover:text-amber-400 transition-all">لوحة التحكم</button>
@@ -49,18 +49,14 @@
             </div>
 
             <!-- Categories Filter -->
-            <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <!-- Filled dynamically -->
-            </div>
+            <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
 
             <!-- Products Grid -->
-            <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- Products loaded via JS -->
-            </div>
+            <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <!-- 🔐 Admin View -->
-        <section id="admin-view" class="hidden space-y-6 max-w-4xl mx-auto">
+        <section id="admin-view" class="hidden space-y-6 max-w-5xl mx-auto">
 
             <!-- Login Card -->
             <div id="admin-login-card" class="bg-gray-900 border border-gray-800 p-6 rounded-3xl space-y-4 max-w-md mx-auto text-center shadow-xl">
@@ -77,7 +73,7 @@
             <!-- Master Admin Panel (Merchant Management) -->
             <div id="master-panel" class="hidden space-y-6">
                 <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-                    <h2 class="font-bold text-sm text-white">إدارة حسابات التجار</h2>
+                    <h2 class="font-bold text-sm text-white">لوحة الأدمن الرئيسي</h2>
                     <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">تسجيل خروج</button>
                 </div>
 
@@ -101,11 +97,50 @@
                                 <tr>
                                     <th class="p-3">اسم التاجر</th>
                                     <th class="p-3">اسم المستخدم</th>
+                                    <th class="p-3">الحالة</th>
+                                    <th class="p-3">إجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="merchants-table-body">
-                                <!-- Loaded via JS -->
-                            </tbody>
+                            <tbody id="merchants-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Manage Any Merchant's Products -->
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs flex items-center justify-between flex-wrap gap-2">
+                        <span>إدارة منتجات التجار</span>
+                        <select id="admin-merchant-filter" onchange="loadAllProductsAdmin(this.value)" class="bg-black border border-gray-800 rounded-lg px-3 py-1.5 text-xs text-white focus:border-amber-500 outline-none">
+                            <option value="all">كل التجار</option>
+                        </select>
+                    </div>
+
+                    <!-- Add product on behalf of any merchant -->
+                    <div class="p-5 space-y-3 border-b border-gray-800">
+                        <h3 class="font-bold text-xs text-amber-400">إضافة منتج لأي تاجر</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <select id="admin-p-merchant" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none"></select>
+                            <input type="text" id="admin-p-name" placeholder="اسم المنتج" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="number" id="admin-p-price" placeholder="السعر (ج.م)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="text" id="admin-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="text" id="admin-p-img" placeholder="رابط الصورة (URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                        </div>
+                        <textarea id="admin-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-16 resize-none"></textarea>
+                        <button onclick="addNewProductAsAdmin()" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">حفظ المنتج للتاجر المختار</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+                                <tr>
+                                    <th class="p-3">المنتج</th>
+                                    <th class="p-3">التاجر</th>
+                                    <th class="p-3">القسم</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-all-products-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -144,9 +179,7 @@
                                     <th class="p-3">إجراء</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-products-table-body">
-                                <!-- Loaded via JS -->
-                            </tbody>
+                            <tbody id="admin-products-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -162,9 +195,7 @@
                 <h2 class="font-bold text-sm text-white">سلة المشتريات</h2>
                 <button onclick="toggleCart()" class="text-gray-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
-            <div id="cart-items" class="flex-1 overflow-y-auto py-4 space-y-3">
-                <!-- Cart items -->
-            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto py-4 space-y-3"></div>
             <div class="pt-4 border-t border-gray-800 space-y-3">
                 <div class="flex items-center justify-between text-sm font-bold">
                     <span>الإجمالي:</span>
@@ -193,13 +224,15 @@
 
     <!-- ⚡ JavaScript (Google Sheets Integration) -->
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVemRRFXkiVRKjQzvPnVKSQqU52wSZTIZlPyVxk8YkpY-Dy9tKyCSzwCssFgMjBwGObQ/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlhY82z2xK5-qrFY1nLtaGru2f35fibNnm0ql4pR1XditUZ3NFyfEv0woSiKx8u1uYug/exec';
+        const MASTER_PASSWORD = '123456'; // نفس كلمة السر اللي في الباك اند - غيّرها من هنا ومن الـ Apps Script مع بعض
 
         let products = [];
         let cart = [];
-        let currentMerchant = null;   
-        let currentMerchantName = ''; 
+        let currentMerchant = null;
+        let currentMerchantName = '';
         let isMasterAdmin = false;
+        let merchantsCache = [];
 
         async function loadCloudProducts() {
             try {
@@ -385,7 +418,7 @@
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
 
-            if (!username && password === '123456') {
+            if (!username && password === MASTER_PASSWORD) {
                 isMasterAdmin = true;
                 currentMerchant = null;
                 document.getElementById('login-username').value = '';
@@ -410,6 +443,8 @@
                     document.getElementById('login-username').value = '';
                     document.getElementById('login-password').value = '';
                     renderMerchantPanel();
+                } else if (result.status === 'held') {
+                    alert('⛔ حسابك موقوف مؤقتاً من الإدارة، تواصل مع الأدمن الرئيسي.');
                 } else {
                     alert('بيانات الدخول غير صحيحة!');
                 }
@@ -434,16 +469,38 @@
 
         async function loadMerchantsList() {
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getMerchants&masterPassword=123456`);
+                const response = await fetch(`${SCRIPT_URL}?action=getMerchants&masterPassword=${MASTER_PASSWORD}`);
                 const data = await response.json();
-                const merchants = Array.isArray(data) ? data : [];
+                merchantsCache = Array.isArray(data) ? data : [];
+
                 const tableBody = document.getElementById('merchants-table-body');
-                tableBody.innerHTML = merchants.map(m => `
+                tableBody.innerHTML = merchantsCache.map(m => {
+                    const isHeld = m.status === 'hold';
+                    return `
                     <tr class="hover:bg-gray-800/40 border-b border-gray-800">
                         <td class="p-3 font-bold text-gray-200">${m.merchantName}</td>
                         <td class="p-3 text-gray-300">${m.username}</td>
-                    </tr>
-                `).join('');
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${isHeld ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}">
+                                ${isHeld ? 'موقوف' : 'نشط'}
+                            </span>
+                        </td>
+                        <td class="p-3 flex flex-wrap gap-1.5">
+                            <button onclick="toggleMerchantHold('${m.username}')" class="px-2.5 py-1 rounded text-[10px] font-bold transition-all ${isHeld ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-yellow-600/20 text-yellow-400 hover:bg-yellow-600 hover:text-white'}">
+                                ${isHeld ? 'تفعيل' : 'تعليق'}
+                            </button>
+                            <button onclick="deleteMerchantAdmin('${m.username}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all text-[10px] font-bold">
+                                حذف
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                const options = merchantsCache.map(m => `<option value="${m.username}">${m.merchantName} (${m.username})</option>`).join('');
+                document.getElementById('admin-p-merchant').innerHTML = options;
+                document.getElementById('admin-merchant-filter').innerHTML = `<option value="all">كل التجار</option>${options}`;
+
+                loadAllProductsAdmin('all');
             } catch (error) {
                 console.error('خطأ في جلب التجار:', error);
             }
@@ -460,7 +517,7 @@
             }
 
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=addMerchant&masterPassword=123456&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&merchantName=${encodeURIComponent(merchantName)}`);
+                const response = await fetch(`${SCRIPT_URL}?action=addMerchant&masterPassword=${MASTER_PASSWORD}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&merchantName=${encodeURIComponent(merchantName)}`);
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -474,6 +531,114 @@
                 }
             } catch (error) {
                 alert('حدث خطأ أثناء الاتصال بالخادم!');
+            }
+        }
+
+        async function toggleMerchantHold(username) {
+            if (!confirm('هل تريد تغيير حالة هذا التاجر؟')) return;
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=toggleMerchantStatus&masterPassword=${MASTER_PASSWORD}&username=${encodeURIComponent(username)}`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    loadMerchantsList();
+                } else {
+                    alert('فشلت العملية!');
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم!');
+            }
+        }
+
+        async function deleteMerchantAdmin(username) {
+            if (!confirm('تحذير: حذف التاجر هيحذف حسابه وكل منتجاته نهائياً. هل أنت متأكد؟')) return;
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=deleteMerchant&masterPassword=${MASTER_PASSWORD}&username=${encodeURIComponent(username)}`);
+                const result = await response.json();
+                if (result.status === 'deleted') {
+                    loadMerchantsList();
+                } else {
+                    alert('فشل الحذف!');
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم!');
+            }
+        }
+
+        async function loadAllProductsAdmin(merchantFilter = 'all') {
+            try {
+                const url = merchantFilter === 'all'
+                    ? `${SCRIPT_URL}?action=getProducts&all=1`
+                    : `${SCRIPT_URL}?action=getProducts&merchant=${encodeURIComponent(merchantFilter)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                const list = Array.isArray(data) ? data : [];
+
+                const nameByUsername = {};
+                merchantsCache.forEach(m => { nameByUsername[m.username] = m.merchantName; });
+
+                const tableBody = document.getElementById('admin-all-products-table-body');
+                tableBody.innerHTML = list.map(p => `
+                    <tr class="hover:bg-gray-800/40 border-b border-gray-800">
+                        <td class="p-3 flex items-center gap-2">
+                            <img src="${p.img}" class="w-8 h-8 rounded object-cover">
+                            <span class="font-bold text-gray-200">${p.name}</span>
+                        </td>
+                        <td class="p-3 text-gray-300">${nameByUsername[p.merchant] || p.merchant}</td>
+                        <td class="p-3 text-gray-300">${p.category || '-'}</td>
+                        <td class="p-3 font-bold text-amber-400">${p.price} ج.م</td>
+                        <td class="p-3">
+                            <button onclick="deleteProductAsAdmin('${p.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded hover:bg-red-600 hover:text-white transition-all text-xs">حذف</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('خطأ في جلب المنتجات:', error);
+            }
+        }
+
+        async function addNewProductAsAdmin() {
+            const merchant = document.getElementById('admin-p-merchant').value;
+            const name = encodeURIComponent(document.getElementById('admin-p-name').value.trim());
+            const price = document.getElementById('admin-p-price').value;
+            const category = encodeURIComponent(document.getElementById('admin-p-category').value.trim() || 'عام');
+            const img = encodeURIComponent(document.getElementById('admin-p-img').value.trim() || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80');
+            const desc = encodeURIComponent(document.getElementById('admin-p-desc').value.trim());
+
+            if (!merchant) return alert('يرجى اختيار التاجر!');
+            if (!name || isNaN(price) || price === '') return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=addProduct&masterPassword=${MASTER_PASSWORD}&name=${name}&price=${price}&category=${category}&img=${img}&desc=${desc}&merchant=${encodeURIComponent(merchant)}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert('✅ تم حفظ المنتج للتاجر بنجاح!');
+                    document.getElementById('admin-p-name').value = '';
+                    document.getElementById('admin-p-price').value = '';
+                    document.getElementById('admin-p-category').value = '';
+                    document.getElementById('admin-p-img').value = '';
+                    document.getElementById('admin-p-desc').value = '';
+                    loadAllProductsAdmin(document.getElementById('admin-merchant-filter').value);
+                } else {
+                    alert('فشل حفظ المنتج!');
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم!');
+            }
+        }
+
+        async function deleteProductAsAdmin(id) {
+            if (!confirm('هل ترغب بحذف هذا المنتج نهائياً من ملف الإكسيل؟')) return;
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=deleteProduct&masterPassword=${MASTER_PASSWORD}&id=${id}`);
+                const result = await response.json();
+                if (result.status === 'deleted') {
+                    loadAllProductsAdmin(document.getElementById('admin-merchant-filter').value);
+                } else {
+                    alert(result.message || 'فشل الحذف!');
+                }
+            } catch (error) {
+                alert('خطأ أثناء الحذف!');
             }
         }
 
@@ -517,12 +682,12 @@
             }
 
             const name = encodeURIComponent(document.getElementById('new-p-name').value.trim());
-            const price = encodeURIComponent(document.getElementById('new-p-price').value);
+            const price = document.getElementById('new-p-price').value;
             const category = encodeURIComponent(document.getElementById('new-p-category').value.trim() || 'عام');
             const img = encodeURIComponent(document.getElementById('new-p-img').value.trim() || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80');
             const desc = encodeURIComponent(document.getElementById('new-p-desc').value.trim());
 
-            if (!name || isNaN(price)) return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
+            if (!name || isNaN(price) || price === '') return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
 
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=addProduct&name=${name}&price=${price}&category=${category}&img=${img}&desc=${desc}&merchant=${encodeURIComponent(currentMerchant)}`);
