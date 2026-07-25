@@ -197,11 +197,10 @@
 
         let products = [];
         let cart = [];
-        let currentMerchant = null;   // اسم المستخدم بتاع التاجر اللي عمل login
-        let currentMerchantName = ''; // الاسم المعروض بتاع التاجر
+        let currentMerchant = null;   
+        let currentMerchantName = ''; 
         let isMasterAdmin = false;
 
-        // جلب المنتجات (المتجر العام: كل المنتجات لكل التجار)
         async function loadCloudProducts() {
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
@@ -222,7 +221,6 @@
                 loadCloudProducts();
             } else if (section === 'admin') {
                 document.getElementById('admin-view').classList.remove('hidden');
-                // لو مسجل دخول بالفعل، اعرض اللوحة المناسبة على طول
                 if (isMasterAdmin) {
                     renderMasterPanel();
                 } else if (currentMerchant) {
@@ -383,13 +381,10 @@
             updateCartUI();
         }
 
-        // ---------- تسجيل الدخول (أدمن رئيسي أو تاجر) ----------
-
         async function loginAdmin() {
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
 
-            // لو اليوزر فاضي وكلمة السر هي كلمة سر الأدمن الرئيسي
             if (!username && password === '123456') {
                 isMasterAdmin = true;
                 currentMerchant = null;
@@ -399,7 +394,6 @@
                 return;
             }
 
-            // غير كده، جرب تسجيل دخول كتاجر
             if (!username || !password) {
                 alert('يرجى إدخال اسم المستخدم وكلمة المرور!');
                 return;
@@ -430,8 +424,6 @@
             currentMerchantName = '';
             showLoginCard();
         }
-
-        // ---------- لوحة الأدمن الرئيسي (إدارة التجار) ----------
 
         function renderMasterPanel() {
             document.getElementById('admin-login-card').classList.add('hidden');
@@ -484,8 +476,6 @@
                 alert('حدث خطأ أثناء الاتصال بالخادم!');
             }
         }
-
-        // ---------- لوحة التاجر (إدارة منتجاته هو بس) ----------
 
         function renderMerchantPanel() {
             document.getElementById('admin-login-card').classList.add('hidden');
