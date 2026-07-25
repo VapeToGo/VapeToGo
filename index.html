@@ -61,20 +61,60 @@
 
         <!-- 🔐 Admin View -->
         <section id="admin-view" class="hidden space-y-6 max-w-4xl mx-auto">
+
             <!-- Login Card -->
             <div id="admin-login-card" class="bg-gray-900 border border-gray-800 p-6 rounded-3xl space-y-4 max-w-md mx-auto text-center shadow-xl">
                 <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 text-lg">
                     <i class="fa-solid fa-lock"></i>
                 </div>
                 <h2 class="text-lg font-bold text-white">تسجيل دخول لوحة التحكم</h2>
-                <input type="password" id="admin-pass-input" placeholder="كلمة المرور (123456)" class="w-full bg-black border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:border-amber-500 outline-none">
+                <p class="text-[10px] text-gray-500">التاجر: يدخل يوزر وباسورد حسابه. الأدمن الرئيسي: يسيب اليوزر فاضي ويدخل كلمة السر الرئيسية.</p>
+                <input type="text" id="login-username" placeholder="اسم المستخدم (فاضي للأدمن الرئيسي)" class="w-full bg-black border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:border-amber-500 outline-none">
+                <input type="password" id="login-password" placeholder="كلمة المرور" class="w-full bg-black border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:border-amber-500 outline-none">
                 <button onclick="loginAdmin()" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">دخول</button>
             </div>
 
-            <!-- Admin Panel (Hidden initially) -->
-            <div id="admin-panel" class="hidden space-y-6">
+            <!-- Master Admin Panel (Merchant Management) -->
+            <div id="master-panel" class="hidden space-y-6">
                 <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-                    <h2 class="font-bold text-sm text-white">إدارة المنتجات (سحابي)</h2>
+                    <h2 class="font-bold text-sm text-white">إدارة حسابات التجار</h2>
+                    <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">تسجيل خروج</button>
+                </div>
+
+                <!-- Add Merchant Form -->
+                <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl space-y-4 shadow-xl">
+                    <h3 class="font-bold text-xs text-amber-400">إضافة تاجر جديد</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="text" id="new-m-name" placeholder="اسم التاجر" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                        <input type="text" id="new-m-username" placeholder="اسم المستخدم (يوزر)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                        <input type="text" id="new-m-password" placeholder="كلمة المرور" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                    </div>
+                    <button onclick="addNewMerchant()" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">إنشاء حساب التاجر</button>
+                </div>
+
+                <!-- Merchants Table -->
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs">قائمة التجار الحاليين</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+                                <tr>
+                                    <th class="p-3">اسم التاجر</th>
+                                    <th class="p-3">اسم المستخدم</th>
+                                </tr>
+                            </thead>
+                            <tbody id="merchants-table-body">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Merchant Panel (Own Products Management) -->
+            <div id="merchant-panel" class="hidden space-y-6">
+                <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl">
+                    <h2 class="font-bold text-sm text-white">إدارة منتجاتي — <span id="merchant-display-name" class="text-amber-400"></span></h2>
                     <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">تسجيل خروج</button>
                 </div>
 
@@ -93,7 +133,7 @@
 
                 <!-- Products Table -->
                 <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
-                    <div class="p-4 border-b border-gray-800 font-bold text-xs">قائمة المنتجات الحالية في الإكسيل</div>
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs">منتجاتي في الإكسيل</div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-xs">
                             <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
@@ -153,9 +193,15 @@
 
     <!-- ⚡ JavaScript (Google Sheets Integration) -->
     <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc3R82EaKYBTNQAOJAFIcGHGQKHjjatTlrD-aqv1ci9eMd27YjA/exec';        let products = [];
-        let cart = [];
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc3R82EaKYBTNQAOJAFIcGHGQKHjjatTlrD-aqv1ci9eMd27YjA/exec';
 
+        let products = [];
+        let cart = [];
+        let currentMerchant = null;   // اسم المستخدم بتاع التاجر اللي عمل login
+        let currentMerchantName = ''; // الاسم المعروض بتاع التاجر
+        let isMasterAdmin = false;
+
+        // جلب المنتجات (المتجر العام: كل المنتجات لكل التجار)
         async function loadCloudProducts() {
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
@@ -176,8 +222,21 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
                 loadCloudProducts();
             } else if (section === 'admin') {
                 document.getElementById('admin-view').classList.remove('hidden');
-                renderAdminPanel();
+                // لو مسجل دخول بالفعل، اعرض اللوحة المناسبة على طول
+                if (isMasterAdmin) {
+                    renderMasterPanel();
+                } else if (currentMerchant) {
+                    renderMerchantPanel();
+                } else {
+                    showLoginCard();
+                }
             }
+        }
+
+        function showLoginCard() {
+            document.getElementById('admin-login-card').classList.remove('hidden');
+            document.getElementById('master-panel').classList.add('hidden');
+            document.getElementById('merchant-panel').classList.add('hidden');
         }
 
         function renderStoreProducts(filterCat = 'all') {
@@ -324,26 +383,125 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
             updateCartUI();
         }
 
-        function loginAdmin() {
-            const pass = document.getElementById('admin-pass-input').value;
-            if (pass === '123456') {
-                document.getElementById('admin-login-card').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                renderAdminPanel();
-            } else {
-                alert('كلمة المرور غير صحيحة!');
+        // ---------- تسجيل الدخول (أدمن رئيسي أو تاجر) ----------
+
+        async function loginAdmin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            // لو اليوزر فاضي وكلمة السر هي كلمة سر الأدمن الرئيسي
+            if (!username && password === '123456') {
+                isMasterAdmin = true;
+                currentMerchant = null;
+                document.getElementById('login-username').value = '';
+                document.getElementById('login-password').value = '';
+                renderMasterPanel();
+                return;
+            }
+
+            // غير كده، جرب تسجيل دخول كتاجر
+            if (!username || !password) {
+                alert('يرجى إدخال اسم المستخدم وكلمة المرور!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=loginMerchant&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    isMasterAdmin = false;
+                    currentMerchant = result.username;
+                    currentMerchantName = result.merchantName;
+                    document.getElementById('login-username').value = '';
+                    document.getElementById('login-password').value = '';
+                    renderMerchantPanel();
+                } else {
+                    alert('بيانات الدخول غير صحيحة!');
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم!');
             }
         }
 
         function logoutAdmin() {
-            document.getElementById('admin-login-card').classList.remove('hidden');
-            document.getElementById('admin-panel').classList.add('hidden');
+            isMasterAdmin = false;
+            currentMerchant = null;
+            currentMerchantName = '';
+            showLoginCard();
         }
 
-        async function renderAdminPanel() {
-            await loadCloudProducts();
-            const tableBody = document.getElementById('admin-products-table-body');
-            if (tableBody) {
+        // ---------- لوحة الأدمن الرئيسي (إدارة التجار) ----------
+
+        function renderMasterPanel() {
+            document.getElementById('admin-login-card').classList.add('hidden');
+            document.getElementById('merchant-panel').classList.add('hidden');
+            document.getElementById('master-panel').classList.remove('hidden');
+            loadMerchantsList();
+        }
+
+        async function loadMerchantsList() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getMerchants&masterPassword=123456`);
+                const data = await response.json();
+                const merchants = Array.isArray(data) ? data : [];
+                const tableBody = document.getElementById('merchants-table-body');
+                tableBody.innerHTML = merchants.map(m => `
+                    <tr class="hover:bg-gray-800/40 border-b border-gray-800">
+                        <td class="p-3 font-bold text-gray-200">${m.merchantName}</td>
+                        <td class="p-3 text-gray-300">${m.username}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('خطأ في جلب التجار:', error);
+            }
+        }
+
+        async function addNewMerchant() {
+            const merchantName = document.getElementById('new-m-name').value.trim();
+            const username = document.getElementById('new-m-username').value.trim();
+            const password = document.getElementById('new-m-password').value;
+
+            if (!merchantName || !username || !password) {
+                alert('يرجى ملء كل بيانات التاجر!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=addMerchant&masterPassword=123456&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&merchantName=${encodeURIComponent(merchantName)}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert('✅ تم إنشاء حساب التاجر بنجاح!');
+                    document.getElementById('new-m-name').value = '';
+                    document.getElementById('new-m-username').value = '';
+                    document.getElementById('new-m-password').value = '';
+                    loadMerchantsList();
+                } else {
+                    alert(result.message || 'فشل إنشاء الحساب!');
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم!');
+            }
+        }
+
+        // ---------- لوحة التاجر (إدارة منتجاته هو بس) ----------
+
+        function renderMerchantPanel() {
+            document.getElementById('admin-login-card').classList.add('hidden');
+            document.getElementById('master-panel').classList.add('hidden');
+            document.getElementById('merchant-panel').classList.remove('hidden');
+            document.getElementById('merchant-display-name').innerText = currentMerchantName;
+            loadMerchantProducts();
+        }
+
+        async function loadMerchantProducts() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getProducts&merchant=${encodeURIComponent(currentMerchant)}`);
+                const data = await response.json();
+                products = Array.isArray(data) ? data : [];
+
+                const tableBody = document.getElementById('admin-products-table-body');
                 tableBody.innerHTML = products.map(p => `
                     <tr class="hover:bg-gray-800/40 border-b border-gray-800">
                         <td class="p-3 flex items-center gap-2">
@@ -357,10 +515,17 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
                         </td>
                     </tr>
                 `).join('');
+            } catch (error) {
+                console.error('خطأ في جلب منتجاتي:', error);
             }
         }
 
         async function addNewProduct() {
+            if (!currentMerchant) {
+                alert('يجب تسجيل الدخول كتاجر أولاً!');
+                return;
+            }
+
             const name = encodeURIComponent(document.getElementById('new-p-name').value.trim());
             const price = encodeURIComponent(document.getElementById('new-p-price').value);
             const category = encodeURIComponent(document.getElementById('new-p-category').value.trim() || 'عام');
@@ -370,7 +535,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
             if (!name || isNaN(price)) return alert('يرجى كتابة الاسم والسعر بصورة صحيحة!');
 
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=addProduct&name=${name}&price=${price}&category=${category}&img=${img}&desc=${desc}`);
+                const response = await fetch(`${SCRIPT_URL}?action=addProduct&name=${name}&price=${price}&category=${category}&img=${img}&desc=${desc}&merchant=${encodeURIComponent(currentMerchant)}`);
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -380,7 +545,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
                     document.getElementById('new-p-category').value = '';
                     document.getElementById('new-p-img').value = '';
                     document.getElementById('new-p-desc').value = '';
-                    renderAdminPanel();
+                    loadMerchantProducts();
                 } else {
                     alert('فشل حفظ المنتج!');
                 }
@@ -392,12 +557,12 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKr-ckKTswWczaAyKZc
         async function deleteProductAdmin(id) {
             if (confirm('هل ترغب بحذف هذا المنتج نهائياً من ملف الإكسيل؟')) {
                 try {
-                    const response = await fetch(`${SCRIPT_URL}?action=deleteProduct&id=${id}`);
+                    const response = await fetch(`${SCRIPT_URL}?action=deleteProduct&id=${id}&merchant=${encodeURIComponent(currentMerchant)}`);
                     const result = await response.json();
                     if (result.status === 'deleted') {
-                        renderAdminPanel();
+                        loadMerchantProducts();
                     } else {
-                        alert('فشل الحذف!');
+                        alert(result.message || 'فشل الحذف!');
                     }
                 } catch (error) {
                     alert('خطأ أثناء الحذف!');
