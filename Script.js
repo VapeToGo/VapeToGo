@@ -1,8 +1,7 @@
 // ==========================================
 // 🚀 VapeToGo - Google Sheets Get API System
 // ==========================================
-https://script.google.com/macros/s/AKfycbx4ejc43A384PUaHcw9B8ZdWHXj3_dMVne0RS7lBbHyZ5Cj446A79h79emhAwBC2s20cg/exec?action=getProducts
-let products = [];
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4ejc43A384PUaHcw9B8ZdWHXj3_dMVne0RS7lBbHyZ5Cj446A79h79emhAwBC2s20cg/exec';let products = [];
 let cart = [];
 
 // جلب المنتجات
