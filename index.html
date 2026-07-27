@@ -67,6 +67,18 @@
                     <button onclick="logoutAdmin()" class="text-red-400 text-xs font-bold">خروج</button>
                 </div>
 
+                <!-- إدارة التجار (إضافة، تعليق، حذف) -->
+                <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-4">
+                    <h3 class="font-bold text-xs text-amber-400">إدارة التجار</h3>
+                    <form onsubmit="addMerchantByAdmin(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                        <input type="text" id="new-m-name" placeholder="اسم المتجر/التاجر" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <input type="text" id="new-m-username" placeholder="يوزرنيم الدخول" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <input type="password" id="new-m-pass" placeholder="كلمة المرور" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <button type="submit" class="bg-amber-500 text-black rounded-xl text-xs font-bold py-2">إضافة تاجر</button>
+                    </form>
+                    <div id="merchants-management-list" class="space-y-2 mt-4"></div>
+                </div>
+
                 <!-- مبيعات التجار والأوردرات -->
                 <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-4">
                     <div class="flex justify-between items-center flex-wrap gap-2">
@@ -93,9 +105,9 @@
                     </div>
                 </div>
 
-                <!-- إضافة منتج مع رابط صورة مباشر لحل مشكلة الخطأ نهائياً -->
+                <!-- إضافة منتج لأي تاجر -->
                 <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-3">
-                    <h3 class="font-bold text-xs text-amber-400">إضافة منتج جديد (برابط صورة مباشر لضمان عدم حدوث أي خطأ)</h3>
+                    <h3 class="font-bold text-xs text-amber-400">إضافة منتج لأي تاجر (برابط صورة مباشر)</h3>
                     <form onsubmit="addNewProductAsAdmin(event)" class="space-y-3">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <input type="text" id="admin-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
@@ -103,6 +115,7 @@
                             <input type="text" id="admin-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
                             <input type="url" id="admin-p-img-url" placeholder="رابط صورة المنتج المباشر (Image URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
                         </div>
+                        <select id="admin-p-merchant" class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white"></select>
                         <textarea id="admin-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white h-16"></textarea>
                         <button type="submit" class="w-full bg-amber-500 text-black py-2 rounded-xl text-xs font-bold">حفظ المنتج</button>
                     </form>
@@ -176,6 +189,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.0"></script>
+    <script src="app.js?v=6.0"></script>
 </body>
 </html>
