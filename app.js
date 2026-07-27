@@ -22,9 +22,6 @@ const DEFAULT_PRODUCT_IMG = 'https://images.unsplash.com/photo-1527661591475-527
 // 🛡️ Security & Utility Helpers
 // ======================================================
 
-/**
- * Escape HTML to prevent Cross-Site Scripting (XSS)
- */
 function escapeHTML(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -35,9 +32,6 @@ function escapeHTML(str) {
     .replace(/'/g, '&#039;');
 }
 
-/**
- * Toast Notification System
- */
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -61,26 +55,36 @@ function showToast(message, type = 'info') {
   toast.innerHTML = `${icons[type] || icons.info} <span>${escapeHTML(message)}</span>`;
 
   container.appendChild(toast);
-
-  // Trigger animation
   requestAnimationFrame(() => {
     toast.classList.remove('translate-y-2', 'opacity-0');
   });
 
-  // Auto remove after 3.5s
   setTimeout(() => {
     toast.classList.add('opacity-0', '-translate-y-2');
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
 
+// دالة مساعدة لقراءة وتحويل ملف الصورة من الجهاز إلى Base64 إجبارياً
+function convertImageToBase64(fileInputId) {
+  return new Promise((resolve, reject) => {
+    const fileInput = document.getElementById(fileInputId);
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+      reject('يرجى اختيار صورة المنتج من الجهاز إجبارياً!');
+      return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (error) => reject('فشل قراءة ملف الصورة');
+    reader.readAsDataURL(file);
+  });
+}
+
 // ======================================================
 // 🛍️ Store Front & Products API
 // ======================================================
 
-/**
- * Load products from Google Apps Script
- */
 async function loadCloudProducts() {
   const grid = document.getElementById('products-grid');
   if (grid && products.length === 0) {
@@ -99,9 +103,6 @@ async function loadCloudProducts() {
   }
 }
 
-/**
- * Skeleton Loader HTML for store products grid
- */
 function renderSkeletonGrid() {
   return Array(4).fill(0).map(() => `
     <div class="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden animate-pulse">
@@ -118,9 +119,6 @@ function renderSkeletonGrid() {
   `).join('');
 }
 
-/**
- * Switch view section (store vs admin)
- */
 function showSection(section) {
   const storeView = document.getElementById('store-view');
   const adminView = document.getElementById('admin-view');
@@ -143,9 +141,6 @@ function showSection(section) {
   }
 }
 
-/**
- * Render Store Products with Security & Category Filtering
- */
 function renderStoreProducts(filterCat = 'all') {
   activeCategory = filterCat;
   const grid = document.getElementById('products-grid');
@@ -197,9 +192,6 @@ function renderStoreProducts(filterCat = 'all') {
   renderCategories();
 }
 
-/**
- * Dynamic Categories Navigation Bar
- */
 function renderCategories() {
   const rawCats = products.map(p => (p.category || '').trim()).filter(Boolean);
   const categories = ['all', ...new Set(rawCats)];
@@ -347,9 +339,6 @@ function closeCheckoutModal() {
   modal.classList.remove('flex');
 }
 
-/**
- * Submit Order & Send formatted message via WhatsApp
- */
 function submitOrder(event) {
   if (event) event.preventDefault();
 
@@ -367,7 +356,6 @@ function submitOrder(event) {
     return;
   }
 
-  // Format WhatsApp Order Message
   let total = 0;
   let itemsText = cart.map((item, idx) => {
     const qty = Number(item.qty) || 1;
@@ -391,17 +379,13 @@ function submitOrder(event) {
   const encodedMsg = encodeURIComponent(message);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
 
-  // Open WhatsApp in new tab
   window.open(whatsappUrl, '_blank');
-
   showToast(`🎉 شكراً ${name}! تم تجهيز طلبك وسيتم إرساله عبر الواتساب.`, 'success');
 
-  // Reset cart and close modal
   cart = [];
   closeCheckoutModal();
   updateCartUI();
 
-  // Clear form fields
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-phone').value = '';
   document.getElementById('cust-address').value = '';
@@ -415,27 +399,21 @@ function showLoginCard() {
   document.getElementById('admin-login-card').classList.remove('hidden');
   document.getElementById('master-panel').classList.add('hidden');
   document.getElementById('merchant-panel').classList.add('hidden');
-  // Reset to merchant tab by default
   switchLoginTab('merchant');
 }
 
-/**
- * Switch between Merchant and Admin login tabs
- */
 function switchLoginTab(tab) {
   const tabMerchant = document.getElementById('tab-merchant');
   const tabAdmin = document.getElementById('tab-admin');
   const usernameField = document.getElementById('login-username');
 
   if (tab === 'admin') {
-    // Admin mode: hide username, set it empty
     tabAdmin.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-amber-500 text-black';
     tabMerchant.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-400 hover:text-white';
     usernameField.classList.add('hidden');
     usernameField.value = '';
     document.getElementById('login-password').placeholder = 'كلمة سر الأدمن الرئيسي';
   } else {
-    // Merchant mode: show username
     tabMerchant.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-amber-500 text-black';
     tabAdmin.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-400 hover:text-white';
     usernameField.classList.remove('hidden');
@@ -455,14 +433,12 @@ async function loginAdmin(event) {
     return;
   }
 
-  // Set Button Loading State
   if (loginBtn) {
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق...';
   }
 
   try {
-    // Master Admin Login: Username is empty and password matches MASTER_PASSWORD
     if (!username) {
       if (password === MASTER_PASSWORD) {
         isMasterAdmin = true;
@@ -477,7 +453,6 @@ async function loginAdmin(event) {
       return;
     }
 
-    // Merchant Login via POST
     const formData = new FormData();
     formData.append('action', 'loginMerchant');
     formData.append('username', username);
@@ -485,14 +460,11 @@ async function loginAdmin(event) {
 
     const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
     const text = await response.text();
-    console.log('Login response:', text);
     let result;
     try { result = JSON.parse(text); } catch(e) {
-      // Fallback: try GET method if POST fails
       const authUrl = `${SCRIPT_URL}?action=loginMerchant&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
       const resp2 = await fetch(authUrl);
       const text2 = await resp2.text();
-      console.log('Login GET fallback response:', text2);
       result = JSON.parse(text2);
     }
 
@@ -548,9 +520,8 @@ async function loadMerchantsList() {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=getMerchants&masterPassword=${encodeURIComponent(MASTER_PASSWORD)}`);
     const text = await response.text();
-    console.log('getMerchants response:', text);
     let data;
-    try { data = JSON.parse(text); } catch(e) { data = []; console.error('Failed to parse merchants:', e); }
+    try { data = JSON.parse(text); } catch(e) { data = []; }
     merchantsCache = Array.isArray(data) ? data : [];
 
     if (tableBody) {
@@ -611,7 +582,6 @@ async function addNewMerchant(event) {
   }
 
   try {
-    // Try POST first, fallback to GET
     let result;
     try {
       const formData = new FormData();
@@ -622,14 +592,11 @@ async function addNewMerchant(event) {
       formData.append('merchantName', merchantName);
       const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
       const text = await response.text();
-      console.log('addMerchant POST response:', text);
       result = JSON.parse(text);
     } catch(postErr) {
-      console.warn('POST failed, trying GET:', postErr);
       const url = `${SCRIPT_URL}?action=addMerchant&masterPassword=${encodeURIComponent(MASTER_PASSWORD)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&merchantName=${encodeURIComponent(merchantName)}`;
       const response = await fetch(url);
       const text = await response.text();
-      console.log('addMerchant GET response:', text);
       result = JSON.parse(text);
     }
 
@@ -640,10 +607,9 @@ async function addNewMerchant(event) {
       document.getElementById('new-m-password').value = '';
       loadMerchantsList();
     } else {
-      showToast(result.message || 'فشل إنشاء الحساب! ' + JSON.stringify(result), 'error');
+      showToast(result.message || 'فشل إنشاء الحساب!', 'error');
     }
   } catch (error) {
-    console.error('خطأ إضافة تاجر:', error);
     showToast('حدث خطأ أثناء الاتصال بالخادم: ' + error.message, 'error');
   }
 }
@@ -653,7 +619,6 @@ async function toggleMerchantHold(username) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=toggleMerchantStatus&masterPassword=${encodeURIComponent(MASTER_PASSWORD)}&username=${encodeURIComponent(username)}`);
     const text = await response.text();
-    console.log('toggleMerchantHold response:', text);
     const result = JSON.parse(text);
     if (result.status === 'success') {
       showToast('تم تغيير حالة التاجر بنجاح', 'success');
@@ -662,7 +627,6 @@ async function toggleMerchantHold(username) {
       showToast(result.message || 'فشلت العملية!', 'error');
     }
   } catch (error) {
-    console.error('toggleMerchantHold error:', error);
     showToast('حدث خطأ أثناء الاتصال بالخادم!', 'error');
   }
 }
@@ -672,7 +636,6 @@ async function deleteMerchantAdmin(username) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=deleteMerchant&masterPassword=${encodeURIComponent(MASTER_PASSWORD)}&username=${encodeURIComponent(username)}`);
     const text = await response.text();
-    console.log('deleteMerchant response:', text);
     const result = JSON.parse(text);
     if (result.status === 'deleted') {
       showToast('تم حذف التاجر بنجاح', 'info');
@@ -681,7 +644,6 @@ async function deleteMerchantAdmin(username) {
       showToast(result.message || 'فشل الحذف!', 'error');
     }
   } catch (error) {
-    console.error('deleteMerchant error:', error);
     showToast('حدث خطأ أثناء الاتصال بالخادم!', 'error');
   }
 }
@@ -733,7 +695,6 @@ async function loadAllProductsAdmin(merchantFilter = 'all') {
       }
     }
   } catch (error) {
-    console.error('خطأ في جلب كافة المنتجات:', error);
     showToast('فشل تحميل المنتجات', 'error');
   }
 }
@@ -745,7 +706,6 @@ async function addNewProductAsAdmin(event) {
   const name = document.getElementById('admin-p-name').value.trim();
   const price = document.getElementById('admin-p-price').value;
   const category = document.getElementById('admin-p-category').value.trim() || 'عام';
-  const img = document.getElementById('admin-p-img').value.trim() || DEFAULT_PRODUCT_IMG;
   const desc = document.getElementById('admin-p-desc').value.trim();
 
   if (!merchant) {
@@ -759,54 +719,36 @@ async function addNewProductAsAdmin(event) {
   }
 
   try {
-    let result;
-    try {
-      // Try POST first
-      const formData = new FormData();
-      formData.append('action', 'addProduct');
-      formData.append('masterPassword', MASTER_PASSWORD);
-      formData.append('name', name);
-      formData.append('price', price);
-      formData.append('category', category);
-      formData.append('img', img);
-      formData.append('desc', desc);
-      formData.append('merchant', merchant);
-      const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-      const text = await response.text();
-      console.log('addProduct (admin) POST response:', text);
-      result = JSON.parse(text);
-    } catch(postErr) {
-      console.warn('POST failed, trying GET:', postErr);
-      const params = new URLSearchParams({
-        action: 'addProduct',
-        masterPassword: MASTER_PASSWORD,
-        name: name,
-        price: price,
-        category: category,
-        img: img,
-        desc: desc,
-        merchant: merchant
-      });
-      const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
-      const text = await response.text();
-      console.log('addProduct (admin) GET response:', text);
-      result = JSON.parse(text);
-    }
+    // رفع الصورة إجبارياً من الجهاز وتحويلها لـ Base64
+    const imgBase64 = await convertImageToBase64('admin-p-img-file');
+
+    const formData = new FormData();
+    formData.append('action', 'addProduct');
+    formData.append('masterPassword', MASTER_PASSWORD);
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('category', category);
+    formData.append('img', imgBase64);
+    formData.append('desc', desc);
+    formData.append('merchant', merchant);
+
+    const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+    const text = await response.text();
+    const result = JSON.parse(text);
 
     if (result.status === 'success') {
       showToast('✅ تم حفظ المنتج للتاجر بنجاح!', 'success');
       document.getElementById('admin-p-name').value = '';
       document.getElementById('admin-p-price').value = '';
       document.getElementById('admin-p-category').value = '';
-      document.getElementById('admin-p-img').value = '';
+      document.getElementById('admin-p-img-file').value = '';
       document.getElementById('admin-p-desc').value = '';
       loadAllProductsAdmin(document.getElementById('admin-merchant-filter').value);
     } else {
-      showToast(result.message || 'فشل حفظ المنتج! ' + JSON.stringify(result), 'error');
+      showToast(result.message || 'فشل حفظ المنتج!', 'error');
     }
   } catch (error) {
-    console.error('خطأ إضافة منتج كأدمن:', error);
-    showToast('حدث خطأ أثناء الاتصال بالخادم: ' + error.message, 'error');
+    showToast(typeof error === 'string' ? error : 'حدث خطأ أثناء رفع الصورة أو حفظ المنتج.', 'warning');
   }
 }
 
@@ -815,7 +757,6 @@ async function deleteProductAsAdmin(id) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=deleteProduct&masterPassword=${encodeURIComponent(MASTER_PASSWORD)}&id=${encodeURIComponent(id)}`);
     const text = await response.text();
-    console.log('deleteProduct (admin) response:', text);
     const result = JSON.parse(text);
     if (result.status === 'deleted') {
       showToast('تم حذف المنتج بنجاح', 'info');
@@ -824,7 +765,6 @@ async function deleteProductAsAdmin(id) {
       showToast(result.message || 'فشل الحذف!', 'error');
     }
   } catch (error) {
-    console.error('deleteProduct error:', error);
     showToast('خطأ أثناء الحذف!', 'error');
   }
 }
@@ -880,7 +820,6 @@ async function loadMerchantProducts() {
       }
     }
   } catch (error) {
-    console.error('خطأ في جلب منتجات التاجر:', error);
     showToast('فشل تحميل منتجاتك', 'error');
   }
 }
@@ -896,7 +835,6 @@ async function addNewProduct(event) {
   const name = document.getElementById('new-p-name').value.trim();
   const price = document.getElementById('new-p-price').value;
   const category = document.getElementById('new-p-category').value.trim() || 'عام';
-  const img = document.getElementById('new-p-img').value.trim() || DEFAULT_PRODUCT_IMG;
   const desc = document.getElementById('new-p-desc').value.trim();
 
   if (!name || isNaN(price) || price === '') {
@@ -905,52 +843,35 @@ async function addNewProduct(event) {
   }
 
   try {
-    let result;
-    try {
-      // Try POST first
-      const formData = new FormData();
-      formData.append('action', 'addProduct');
-      formData.append('name', name);
-      formData.append('price', price);
-      formData.append('category', category);
-      formData.append('img', img);
-      formData.append('desc', desc);
-      formData.append('merchant', currentMerchant);
-      const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-      const text = await response.text();
-      console.log('addProduct (merchant) POST response:', text);
-      result = JSON.parse(text);
-    } catch(postErr) {
-      console.warn('POST failed, trying GET:', postErr);
-      const params = new URLSearchParams({
-        action: 'addProduct',
-        name: name,
-        price: price,
-        category: category,
-        img: img,
-        desc: desc,
-        merchant: currentMerchant
-      });
-      const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
-      const text = await response.text();
-      console.log('addProduct (merchant) GET response:', text);
-      result = JSON.parse(text);
-    }
+    // رفع الصورة إجبارياً من الجهاز وتحويلها لـ Base64
+    const imgBase64 = await convertImageToBase64('new-p-img-file');
+
+    const formData = new FormData();
+    formData.append('action', 'addProduct');
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('category', category);
+    formData.append('img', imgBase64);
+    formData.append('desc', desc);
+    formData.append('merchant', currentMerchant);
+
+    const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+    const text = await response.text();
+    const result = JSON.parse(text);
 
     if (result.status === 'success') {
       showToast('✅ تم حفظ المنتج في ملف الإكسيل بنجاح!', 'success');
       document.getElementById('new-p-name').value = '';
       document.getElementById('new-p-price').value = '';
       document.getElementById('new-p-category').value = '';
-      document.getElementById('new-p-img').value = '';
+      document.getElementById('new-p-img-file').value = '';
       document.getElementById('new-p-desc').value = '';
       loadMerchantProducts();
     } else {
-      showToast(result.message || 'فشل حفظ المنتج! ' + JSON.stringify(result), 'error');
+      showToast(result.message || 'فشل حفظ المنتج!', 'error');
     }
   } catch (error) {
-    console.error('خطأ إضافة منتج:', error);
-    showToast('حدث خطأ أثناء الاتصال بالخادم: ' + error.message, 'error');
+    showToast(typeof error === 'string' ? error : 'حدث خطأ أثناء رفع الصورة أو حفظ المنتج.', 'warning');
   }
 }
 
