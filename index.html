@@ -17,7 +17,6 @@
         body { 
             font-family: 'Cairo', sans-serif; 
         }
-        /* Custom scrollbar for categories horizontal scroll */
         .scrollbar-none::-webkit-scrollbar {
             display: none;
         }
@@ -55,7 +54,6 @@
 
         <!-- 🛒 Store View Section -->
         <section id="store-view" class="space-y-6">
-            <!-- Hero Banner -->
             <div class="bg-gradient-to-r from-amber-500/15 via-gray-900 to-gray-900 border border-amber-500/20 rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-2xl">
                 <div class="space-y-3 z-10 text-center md:text-right">
                     <span class="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-400 text-[11px] font-bold px-3.5 py-1 rounded-full border border-amber-500/30">
@@ -70,17 +68,13 @@
                 </div>
             </div>
 
-            <!-- Categories Filter -->
             <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
-
-            <!-- Products Grid -->
             <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <!-- 🔐 Admin & Merchant View Section -->
         <section id="admin-view" class="hidden space-y-6 max-w-5xl mx-auto">
 
-            <!-- Login Form Card -->
             <div id="admin-login-card" class="bg-gray-900 border border-gray-800 p-6 md:p-8 rounded-3xl space-y-5 max-w-md mx-auto text-center shadow-2xl">
                 <div class="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 text-xl shadow-inner">
                     <i class="fa-solid fa-lock"></i>
@@ -90,7 +84,6 @@
                     <p class="text-[11px] text-gray-400">اختر نوع الدخول: أدمن رئيسي أو تاجر</p>
                 </div>
 
-                <!-- Admin Login Tab Buttons -->
                 <div class="flex gap-2 bg-black rounded-xl p-1 border border-gray-800">
                     <button type="button" id="tab-merchant" onclick="switchLoginTab('merchant')" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-amber-500 text-black">دخول كتاجر</button>
                     <button type="button" id="tab-admin" onclick="switchLoginTab('admin')" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-400 hover:text-white">دخول كأدمن رئيسي</button>
@@ -105,7 +98,7 @@
                 </form>
             </div>
 
-            <!-- Master Admin Panel (Merchant Management) -->
+            <!-- Master Admin Panel -->
             <div id="master-panel" class="hidden space-y-6">
                 <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-lg">
                     <div class="flex items-center gap-2">
@@ -117,7 +110,6 @@
                     </button>
                 </div>
 
-                <!-- Add Merchant Form -->
                 <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl space-y-4 shadow-xl">
                     <h3 class="font-bold text-xs text-amber-400 flex items-center gap-1.5">
                         <i class="fa-solid fa-user-plus"></i>
@@ -133,7 +125,6 @@
                     </form>
                 </div>
 
-                <!-- Merchants Table -->
                 <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
                     <div class="p-4 border-b border-gray-800 font-bold text-xs text-gray-200">قائمة التجار الحاليين</div>
                     <div class="overflow-x-auto">
@@ -151,7 +142,6 @@
                     </div>
                 </div>
 
-                <!-- Manage Any Merchant's Products -->
                 <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
                     <div class="p-4 border-b border-gray-800 font-bold text-xs flex items-center justify-between flex-wrap gap-2">
                         <span>إدارة كافة منتجات التجار</span>
@@ -160,16 +150,20 @@
                         </select>
                     </div>
 
-                    <!-- Add product on behalf of any merchant -->
                     <div class="p-5 border-b border-gray-800">
-                        <h3 class="font-bold text-xs text-amber-400 mb-3">إضافة منتج لأي تاجر</h3>
+                        <h3 class="font-bold text-xs text-amber-400 mb-3">إضافة منتج لأي تاجر (صورة إجبارية من الجهاز)</h3>
                         <form onsubmit="addNewProductAsAdmin(event)" class="space-y-3">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <select id="admin-p-merchant" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none"></select>
                                 <input type="text" id="admin-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
                                 <input type="number" id="admin-p-price" placeholder="السعر (ج.م)" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
                                 <input type="text" id="admin-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
-                                <input type="text" id="admin-p-img" placeholder="رابط الصورة (URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                                
+                                <!-- حقل رفع الصورة إجبارياً من الجهاز -->
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[10px] text-gray-400">صورة المنتج من الجهاز (إجباري)</label>
+                                    <input type="file" id="admin-p-img-file" accept="image/*" required class="bg-black border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-300 focus:border-amber-500 outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-black hover:file:bg-amber-400">
+                                </div>
                             </div>
                             <textarea id="admin-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-16 resize-none"></textarea>
                             <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">حفظ المنتج للتاجر المختار</button>
@@ -193,32 +187,35 @@
                 </div>
             </div>
 
-            <!-- Merchant Panel (Own Products Management) -->
+            <!-- Merchant Panel -->
             <div id="merchant-panel" class="hidden space-y-6">
                 <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-lg">
                     <h2 class="font-bold text-sm text-white">إدارة منتجاتي — <span id="merchant-display-name" class="text-amber-400"></span></h2>
                     <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">تسجيل خروج</button>
                 </div>
 
-                <!-- Add Product Form -->
                 <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl space-y-4 shadow-xl">
                     <h3 class="font-bold text-xs text-amber-400 flex items-center gap-1.5">
                         <i class="fa-solid fa-plus-circle"></i>
-                        <span>إضافة منتج جديد لملف الإكسيل</span>
+                        <span>إضافة منتج جديد لملف الإكسيل (صورة إجبارية من الجهاز)</span>
                     </h3>
                     <form onsubmit="addNewProduct(event)" class="space-y-3">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <input type="text" id="new-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
                             <input type="number" id="new-p-price" placeholder="السعر (ج.م)" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
                             <input type="text" id="new-p-category" placeholder="القسم (مثال: سولت, أجهزة)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
-                            <input type="text" id="new-p-img" placeholder="رابط الصورة (URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            
+                            <!-- حقل رفع الصورة إجبارياً من الجهاز -->
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[10px] text-gray-400">صورة المنتج من الجهاز (إجباري)</label>
+                                <input type="file" id="new-p-img-file" accept="image/*" required class="bg-black border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-300 focus:border-amber-500 outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-black hover:file:bg-amber-400">
+                            </div>
                         </div>
                         <textarea id="new-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-20 resize-none"></textarea>
                         <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all shadow-md">حفظ وإضافة للملف السحابي ⚡</button>
                     </form>
                 </div>
 
-                <!-- Products Table -->
                 <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
                     <div class="p-4 border-b border-gray-800 font-bold text-xs text-gray-200">منتجاتي الحالية</div>
                     <div class="overflow-x-auto">
@@ -305,6 +302,6 @@
     </div>
 
     <!-- ⚡ Modern JS Logic -->
-    <script src="app.js?v=4.0"></script>
+    <script src="app.js?v=4.1"></script>
 </body>
 </html>
