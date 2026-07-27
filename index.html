@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VapeToGo - المتجر السحابي الممتاز</title>
+    <meta name="description" content="تسوق أفضل أجهزة ونكهات الفيب مع خدمة التوصيل السريع لجميع المناطق.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Cairo', sans-serif; 
+        }
+        /* Custom scrollbar for categories horizontal scroll */
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-black relative">
+
+    <!-- 🔔 Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2.5 max-w-sm w-full px-4 pointer-events-none"></div>
+
+    <!-- 🌐 Navbar -->
+    <nav class="bg-gray-900/90 backdrop-blur-md border-b border-gray-800/80 sticky top-0 z-40 px-4 py-3 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="showSection('store')">
+                <span class="text-xl font-black tracking-wider text-amber-500 group-hover:text-amber-400 transition-all">VAPE<span class="text-white">TOGO</span></span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="showSection('store')" class="text-xs font-semibold text-gray-300 hover:text-amber-400 px-2.5 py-1.5 rounded-lg hover:bg-gray-800/50 transition-all">المتجر</button>
+                <button onclick="showSection('admin')" class="text-xs font-semibold text-gray-300 hover:text-amber-400 px-2.5 py-1.5 rounded-lg hover:bg-gray-800/50 transition-all">لوحة التحكم</button>
+                <button onclick="toggleCart()" class="relative bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-amber-500/20 active:scale-95 transition-all shadow-lg shadow-amber-500/5">
+                    <i class="fa-solid fa-cart-shopping text-sm"></i>
+                    <span id="cart-count" class="bg-amber-500 text-black text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-[18px] text-center">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 📦 Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- 🛒 Store View Section -->
+        <section id="store-view" class="space-y-6">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-amber-500/15 via-gray-900 to-gray-900 border border-amber-500/20 rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-2xl">
+                <div class="space-y-3 z-10 text-center md:text-right">
+                    <span class="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-400 text-[11px] font-bold px-3.5 py-1 rounded-full border border-amber-500/30">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        متصل سحابياً ⚡
+                    </span>
+                    <h1 class="text-2xl md:text-4xl font-black text-white leading-tight">أفضل منتجات الفيب وتوصيل سريع</h1>
+                    <p class="text-xs md:text-sm text-gray-400 max-w-md">تسوق أحدث الأجهزة والنكهات بأفضل الأسعار، طلبك يوصلك لحد باب البيت وتواصل مباشر عبر الواتساب.</p>
+                </div>
+                <div class="w-24 h-24 md:w-32 md:w-32 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shadow-inner">
+                    <i class="fa-solid fa-cloud-bolt text-4xl text-amber-400"></i>
+                </div>
+            </div>
+
+            <!-- Categories Filter -->
+            <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+
+            <!-- Products Grid -->
+            <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <!-- 🔐 Admin & Merchant View Section -->
+        <section id="admin-view" class="hidden space-y-6 max-w-5xl mx-auto">
+
+            <!-- Login Form Card -->
+            <div id="admin-login-card" class="bg-gray-900 border border-gray-800 p-6 md:p-8 rounded-3xl space-y-5 max-w-md mx-auto text-center shadow-2xl">
+                <div class="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 text-xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="space-y-1">
+                    <h2 class="text-lg font-bold text-white">تسجيل دخول لوحة التحكم</h2>
+                    <p class="text-[11px] text-gray-400">التاجر: أدخل اليوزر والباسورد. الأدمن الرئيسي: اترك اسم المستخدم فارغاً وأدخل كلمة السر الرئيسية.</p>
+                </div>
+                <form onsubmit="loginAdmin(event)" class="space-y-3">
+                    <input type="text" id="login-username" placeholder="اسم المستخدم (اختياري للأدمن الرئيسي)" class="w-full bg-black border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:border-amber-500 outline-none transition-all">
+                    <input type="password" id="login-password" placeholder="كلمة المرور" required class="w-full bg-black border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-center text-white focus:border-amber-500 outline-none transition-all">
+                    <button type="submit" id="login-submit-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md">
+                        دخول
+                    </button>
+                </form>
+            </div>
+
+            <!-- Master Admin Panel (Merchant Management) -->
+            <div id="master-panel" class="hidden space-y-6">
+                <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-amber-400 text-base"></i>
+                        <h2 class="font-bold text-sm text-white">لوحة الأدمن الرئيسي</h2>
+                    </div>
+                    <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">
+                        تسجيل خروج
+                    </button>
+                </div>
+
+                <!-- Add Merchant Form -->
+                <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl space-y-4 shadow-xl">
+                    <h3 class="font-bold text-xs text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>إضافة تاجر جديد</span>
+                    </h3>
+                    <form onsubmit="addNewMerchant(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" id="new-m-name" placeholder="اسم التاجر" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="text" id="new-m-username" placeholder="اسم المستخدم (يوزر)" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="password" id="new-m-password" placeholder="كلمة المرور" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">أنشئ حساب التاجر</button>
+                    </form>
+                </div>
+
+                <!-- Merchants Table -->
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs text-gray-200">قائمة التجار الحاليين</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+                                <tr>
+                                    <th class="p-3">اسم التاجر</th>
+                                    <th class="p-3">اسم المستخدم</th>
+                                    <th class="p-3">الحالة</th>
+                                    <th class="p-3">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="merchants-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Manage Any Merchant's Products -->
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs flex items-center justify-between flex-wrap gap-2">
+                        <span>إدارة كافة منتجات التجار</span>
+                        <select id="admin-merchant-filter" onchange="loadAllProductsAdmin(this.value)" class="bg-black border border-gray-800 rounded-lg px-3 py-1.5 text-xs text-white focus:border-amber-500 outline-none">
+                            <option value="all">كل التجار</option>
+                        </select>
+                    </div>
+
+                    <!-- Add product on behalf of any merchant -->
+                    <div class="p-5 border-b border-gray-800">
+                        <h3 class="font-bold text-xs text-amber-400 mb-3">إضافة منتج لأي تاجر</h3>
+                        <form onsubmit="addNewProductAsAdmin(event)" class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <select id="admin-p-merchant" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none"></select>
+                                <input type="text" id="admin-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                                <input type="number" id="admin-p-price" placeholder="السعر (ج.م)" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                                <input type="text" id="admin-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                                <input type="text" id="admin-p-img" placeholder="رابط الصورة (URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            </div>
+                            <textarea id="admin-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-16 resize-none"></textarea>
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all">حفظ المنتج للتاجر المختار</button>
+                        </form>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+                                <tr>
+                                    <th class="p-3">المنتج</th>
+                                    <th class="p-3">التاجر</th>
+                                    <th class="p-3">القسم</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-all-products-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Merchant Panel (Own Products Management) -->
+            <div id="merchant-panel" class="hidden space-y-6">
+                <div class="flex items-center justify-between bg-gray-900 border border-gray-800 p-4 rounded-2xl shadow-lg">
+                    <h2 class="font-bold text-sm text-white">إدارة منتجاتي — <span id="merchant-display-name" class="text-amber-400"></span></h2>
+                    <button onclick="logoutAdmin()" class="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-all">تسجيل خروج</button>
+                </div>
+
+                <!-- Add Product Form -->
+                <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl space-y-4 shadow-xl">
+                    <h3 class="font-bold text-xs text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>إضافة منتج جديد لملف الإكسيل</span>
+                    </h3>
+                    <form onsubmit="addNewProduct(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="new-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="number" id="new-p-price" placeholder="السعر (ج.م)" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="text" id="new-p-category" placeholder="القسم (مثال: سولت, أجهزة)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                            <input type="text" id="new-p-img" placeholder="رابط الصورة (URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                        </div>
+                        <textarea id="new-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-20 resize-none"></textarea>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all shadow-md">حفظ وإضافة للملف السحابي ⚡</button>
+                    </form>
+                </div>
+
+                <!-- Products Table -->
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-gray-800 font-bold text-xs text-gray-200">منتجاتي الحالية</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+                                <tr>
+                                    <th class="p-3">المنتج</th>
+                                    <th class="p-3">القسم</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 🛍️ Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden justify-end transition-all">
+        <div class="bg-gray-900 w-full max-w-md h-full flex flex-col border-r border-gray-800 p-5 shadow-2xl">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bag-shopping text-amber-400"></i>
+                    <h2 class="font-bold text-sm text-white">سلة المشتريات</h2>
+                </div>
+                <button onclick="toggleCart()" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 transition-all">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto py-4 space-y-3"></div>
+
+            <div class="pt-4 border-t border-gray-800 space-y-3">
+                <div class="flex items-center justify-between text-sm font-bold">
+                    <span class="text-gray-300">الإجمالي النهائي:</span>
+                    <span id="cart-total-price" class="text-amber-400 text-base font-extrabold">0 ج.م</span>
+                </div>
+                <button onclick="openCheckoutModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-black py-3 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <span>متابعة الشراء</span>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📦 Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
+                <h2 class="font-bold text-sm text-white flex items-center gap-2">
+                    <i class="fa-solid fa-truck-fast text-amber-400"></i>
+                    <span>بيانات الشحن والتوصيل</span>
+                </h2>
+                <button onclick="closeCheckoutModal()" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <form onsubmit="submitOrder(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-gray-400 mb-1">الاسم بالكامل</label>
+                    <input type="text" id="cust-name" placeholder="مثال: أحمد محمد" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-gray-400 mb-1">رقم الهاتف (الواتساب)</label>
+                    <input type="tel" id="cust-phone" placeholder="مثال: 010xxxxxxxx" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-gray-400 mb-1">عنوان التوصيل بالتفصيل</label>
+                    <textarea id="cust-address" placeholder="المحافظة - المنطقة - الشارع - رقم العقار..." required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 outline-none h-20 resize-none"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-400 text-black py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span>تأكيد الطلب عبر الواتساب</span>
+                    </button>
+                    <button type="button" onclick="closeCheckoutModal()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2.5 rounded-xl text-xs font-bold transition-all">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ⚡ Modern JS Logic -->
+    <script src="app.js?v=3.0"></script>
+</body>
+</html>
