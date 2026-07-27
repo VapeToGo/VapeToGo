@@ -1,454 +1,181 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlhY82z2xK5-qrFY1nLtaGru2f35fibNnm0ql4pR1XditUZ3NFyfEv0woSiKx8u1uYug/exec';
-const MASTER_PASSWORD = '123456';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VapeToGo - المتجر السحابي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen flex flex-col">
 
-let products = [];
-let cart = [];
-let currentMerchant = null;
-let currentMerchantName = '';
-let isMasterAdmin = false;
-let merchantsCache = [];
-let activeCategory = 'all';
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"></div>
 
-const DEFAULT_PRODUCT_IMG = 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80';
-
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-}
-
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  const bgColors = {
-    success: 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200',
-    error: 'bg-red-950/90 border-red-500/50 text-red-200',
-    warning: 'bg-amber-950/90 border-amber-500/50 text-amber-200',
-    info: 'bg-gray-900/95 border-amber-500/30 text-gray-100'
-  };
-  toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl text-xs font-semibold backdrop-blur-md transition-all duration-300 ${bgColors[type] || bgColors.info}`;
-  toast.innerHTML = `<span>${escapeHTML(message)}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
-}
-
-// دالة تحويل الصورة لرابط آمن أو استخدام الرابط المباشر
-function getProductImgUrl(inputElementId) {
-  const urlInput = document.getElementById(inputElementId + '-url');
-  if (urlInput && urlInput.value.trim() !== '') {
-    return urlInput.value.trim();
-  }
-  return DEFAULT_PRODUCT_IMG;
-}
-
-async function loadCloudProducts() {
-  try {
-    const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
-    const data = await response.json();
-    products = Array.isArray(data) ? data : [];
-    renderStoreProducts(activeCategory);
-  } catch (error) {
-    products = [];
-    renderStoreProducts(activeCategory);
-  }
-}
-
-function showSection(section) {
-  ['store-view', 'admin-view', 'track-view'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  });
-
-  if (section === 'store') {
-    document.getElementById('store-view').classList.remove('hidden');
-    loadCloudProducts();
-  } else if (section === 'admin') {
-    document.getElementById('admin-view').classList.remove('hidden');
-    if (isMasterAdmin) renderMasterPanel();
-    else if (currentMerchant) renderMerchantPanel();
-    else showLoginCard();
-  } else if (section === 'track') {
-    document.getElementById('track-view').classList.remove('hidden');
-  }
-}
-
-function renderStoreProducts(filterCat = 'all') {
-  activeCategory = filterCat;
-  const grid = document.getElementById('products-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const filtered = filterCat === 'all' ? products : products.filter(p => (p.category || '').trim().toLowerCase() === filterCat.trim().toLowerCase());
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 text-xs">لا توجد منتجات متاحة.</div>`;
-    return;
-  }
-
-  filtered.forEach(p => {
-    grid.innerHTML += `
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-lg flex flex-col justify-between">
-        <div>
-          <div class="h-44 bg-gray-800 relative">
-            <img src="${escapeHTML(p.img || DEFAULT_PRODUCT_IMG)}" onerror="this.src='${DEFAULT_PRODUCT_IMG}'" class="w-full h-full object-cover">
-          </div>
-          <div class="p-3.5 space-y-1">
-            <h3 class="font-bold text-xs text-gray-100 line-clamp-1">${escapeHTML(p.name)}</h3>
-            <p class="text-[10px] text-gray-400 line-clamp-2">${escapeHTML(p.desc)}</p>
-          </div>
+    <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <span class="text-xl font-black text-amber-500 cursor-pointer" onclick="showSection('store')">VAPE<span class="text-white">TOGO</span></span>
+            <div class="flex items-center gap-3">
+                <button onclick="showSection('store')" class="text-xs text-gray-300 hover:text-amber-400">المتجر</button>
+                <button onclick="showSection('track')" class="text-xs text-gray-300 hover:text-amber-400">تتبع طلبك</button>
+                <button onclick="showSection('admin')" class="text-xs text-gray-300 hover:text-amber-400">لوحة التحكم</button>
+                <button onclick="toggleCart()" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span id="cart-count">0</span>
+                </button>
+            </div>
         </div>
-        <div class="p-3.5 pt-0 flex items-center justify-between">
-          <span class="text-sm font-extrabold text-amber-400">${escapeHTML(p.price)} ج.م</span>
-          <button onclick="addToCart('${escapeHTML(p.id)}')" class="bg-amber-500 hover:bg-amber-400 text-black px-3 py-1.5 rounded-lg text-xs font-bold">إضافة للسلة</button>
+    </nav>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- Store View -->
+        <section id="store-view" class="space-y-6">
+            <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <!-- Track Order View -->
+        <section id="track-view" class="hidden max-w-md mx-auto space-y-4 bg-gray-900 p-6 rounded-3xl border border-gray-800">
+            <h2 class="text-base font-bold text-amber-400 text-center">تتبع حالة طلبك</h2>
+            <div class="flex gap-2">
+                <input type="text" id="track-input" placeholder="أدخل رقم الهاتف أو رقم الطلب..." class="flex-1 bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                <button onclick="trackOrder()" class="bg-amber-500 text-black px-4 py-2 rounded-xl text-xs font-bold">بحث</button>
+            </div>
+            <div id="track-result" class="space-y-3"></div>
+        </section>
+
+        <!-- Admin View -->
+        <section id="admin-view" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div id="admin-login-card" class="bg-gray-900 border border-gray-800 p-6 rounded-3xl space-y-4 max-w-sm mx-auto text-center">
+                <h2 class="text-sm font-bold">تسجيل الدخول</h2>
+                <div class="flex gap-2 bg-black p-1 rounded-lg">
+                    <button type="button" onclick="switchLoginTab('merchant')" class="flex-1 py-1.5 rounded text-xs font-bold bg-amber-500 text-black">تاجر</button>
+                    <button type="button" onclick="switchLoginTab('admin')" class="flex-1 py-1.5 rounded text-xs font-bold text-gray-400">أدمن رئيسي</button>
+                </div>
+                <form onsubmit="loginAdmin(event)" class="space-y-3">
+                    <input type="text" id="login-username" placeholder="اسم المستخدم" class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-center text-white">
+                    <input type="password" id="login-password" placeholder="كلمة المرور" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-center text-white">
+                    <button type="submit" class="w-full bg-amber-500 text-black py-2 rounded-xl text-xs font-bold">دخول</button>
+                </form>
+            </div>
+
+            <!-- Master Panel -->
+            <div id="master-panel" class="hidden space-y-6">
+                <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl border border-gray-800">
+                    <h2 class="font-bold text-xs">لوحة الأدمن الرئيسي</h2>
+                    <button onclick="logoutAdmin()" class="text-red-400 text-xs font-bold">خروج</button>
+                </div>
+
+                <!-- مبيعات التجار والأوردرات -->
+                <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-4">
+                    <div class="flex justify-between items-center flex-wrap gap-2">
+                        <h3 class="font-bold text-xs text-amber-400">مبيعات وأوردرات التجار</h3>
+                        <select id="admin-sales-merchant-filter" onchange="filterAdminOrders(this.value)" class="bg-black border border-gray-800 rounded-lg px-3 py-1.5 text-xs text-white">
+                            <option value="all">كل المبيعات</option>
+                        </select>
+                    </div>
+                    <div class="text-sm font-bold text-white">إجمالي المبيعات المختارة: <span id="admin-total-sales-val" class="text-amber-400">0 ج.م</span></div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-gray-800 text-gray-400">
+                                <tr>
+                                    <th class="p-3">رقم الطلب</th>
+                                    <th class="p-3">العميل</th>
+                                    <th class="p-3">المنتجات</th>
+                                    <th class="p-3">الإجمالي</th>
+                                    <th class="p-3">التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- إضافة منتج مع رابط صورة مباشر لحل مشكلة الخطأ نهائياً -->
+                <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-3">
+                    <h3 class="font-bold text-xs text-amber-400">إضافة منتج جديد (برابط صورة مباشر لضمان عدم حدوث أي خطأ)</h3>
+                    <form onsubmit="addNewProductAsAdmin(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="admin-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="number" id="admin-p-price" placeholder="السعر" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="text" id="admin-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="url" id="admin-p-img-url" placeholder="رابط صورة المنتج المباشر (Image URL)" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <textarea id="admin-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white h-16"></textarea>
+                        <button type="submit" class="w-full bg-amber-500 text-black py-2 rounded-xl text-xs font-bold">حفظ المنتج</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Merchant Panel -->
+            <div id="merchant-panel" class="hidden space-y-6">
+                <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl border border-gray-800">
+                    <h2 class="font-bold text-xs">لوحة التاجر: <span id="merchant-display-name" class="text-amber-400"></span></h2>
+                    <button onclick="logoutAdmin()" class="text-red-400 text-xs font-bold">خروج</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                        <span class="text-[10px] text-gray-400">إجمالي المبيعات</span>
+                        <div id="merchant-total-sales" class="text-base font-black text-amber-400">0 ج.م</div>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                        <span class="text-[10px] text-gray-400">عدد الطلبات</span>
+                        <div id="merchant-orders-count" class="text-base font-black text-white">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 space-y-3">
+                    <h3 class="font-bold text-xs text-amber-400">إضافة منتج لمتجرك</h3>
+                    <form onsubmit="addNewProduct(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="new-p-name" placeholder="اسم المنتج" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="number" id="new-p-price" placeholder="السعر" required class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="text" id="new-p-category" placeholder="القسم" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <input type="url" id="new-p-img-url" placeholder="رابط صورة المنتج المباشر" class="bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <textarea id="new-p-desc" placeholder="وصف المنتج..." class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white h-16"></textarea>
+                        <button type="submit" class="w-full bg-amber-500 text-black py-2 rounded-xl text-xs font-bold">إضافة المنتج</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-0 bg-black/80 z-50 hidden justify-end">
+        <div class="bg-gray-900 w-full max-w-md h-full flex flex-col p-5 border-r border-gray-800">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+                <span class="font-bold text-xs">سلة المشتريات</span>
+                <button onclick="toggleCart()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto py-3 space-y-2"></div>
+            <div class="pt-3 border-t border-gray-800 space-y-2">
+                <div class="flex justify-between text-xs font-bold">
+                    <span>الإجمالي:</span>
+                    <span id="cart-total-price" class="text-amber-400">0 ج.م</span>
+                </div>
+                <button onclick="openCheckoutModal()" class="w-full bg-amber-500 text-black py-2.5 rounded-xl text-xs font-bold">إتمام الشراء</button>
+            </div>
         </div>
-      </div>
-    `;
-  });
-}
+    </div>
 
-function addToCart(productId) {
-  const prod = products.find(p => String(p.id) === String(productId));
-  if (!prod) return;
-  const existing = cart.find(item => String(item.id) === String(productId));
-  if (existing) existing.qty = (existing.qty || 1) + 1;
-  else cart.push({ ...prod, qty: 1 });
-  updateCartUI();
-  toggleCart(true);
-  showToast('تمت الإضافة للسلة', 'success');
-}
-
-function updateCartQty(productId, delta) {
-  const item = cart.find(i => String(i.id) === String(productId));
-  if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) cart = cart.filter(i => String(i.id) !== String(productId));
-  updateCartUI();
-}
-
-function removeFromCart(id) {
-  cart = cart.filter(i => String(i.id) !== String(id));
-  updateCartUI();
-}
-
-function updateCartUI() {
-  const cartContainer = document.getElementById('cart-items');
-  const countSpan = document.getElementById('cart-count');
-  const totalSpan = document.getElementById('cart-total-price');
-  if (!cartContainer) return;
-  countSpan.innerText = cart.reduce((acc, i) => acc + i.qty, 0);
-
-  if (cart.length === 0) {
-    cartContainer.innerHTML = `<div class="text-center py-12 text-gray-500 text-xs">السلة فارغة</div>`;
-    totalSpan.innerText = '0 ج.م';
-    return;
-  }
-
-  let total = 0;
-  cartContainer.innerHTML = cart.map(item => {
-    total += Number(item.price) * item.qty;
-    return `
-      <div class="flex items-center justify-between bg-gray-800/50 p-3 rounded-xl text-xs">
-        <div>
-          <div class="font-bold text-gray-100">${escapeHTML(item.name)}</div>
-          <div class="text-amber-400">${item.price} ج.م</div>
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-900 w-full max-w-md rounded-3xl p-5 border border-gray-800 space-y-3">
+            <h2 class="font-bold text-xs text-amber-400">بيانات الشحن</h2>
+            <form onsubmit="submitOrder(event)" class="space-y-2">
+                <input type="text" id="cust-name" placeholder="الاسم" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                <input type="tel" id="cust-phone" placeholder="رقم الهاتف" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                <textarea id="cust-address" placeholder="العنوان بالتفصيل" required class="w-full bg-black border border-gray-800 rounded-xl px-3 py-2 text-xs text-white h-16"></textarea>
+                <button type="submit" class="w-full bg-amber-500 text-black py-2.5 rounded-xl text-xs font-bold">تأكيد الطلب</button>
+            </form>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="updateCartQty('${item.id}', -1)" class="px-2 bg-gray-900 rounded">-</button>
-          <span>${item.qty}</span>
-          <button onclick="updateCartQty('${item.id}', 1)" class="px-2 bg-gray-900 rounded">+</button>
-          <button onclick="removeFromCart('${item.id}')" class="text-red-400">حذف</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-  totalSpan.innerText = `${total} ج.م`;
-}
+    </div>
 
-function toggleCart(forceOpen = false) {
-  const drawer = document.getElementById('cart-drawer');
-  if (forceOpen) drawer.classList.remove('hidden');
-  else drawer.classList.toggle('hidden');
-  updateCartUI();
-}
-
-function openCheckoutModal() {
-  if (cart.length === 0) return showToast('السلة فارغة', 'warning');
-  toggleCart(false);
-  document.getElementById('checkout-modal').classList.remove('hidden');
-}
-
-function closeCheckoutModal() {
-  document.getElementById('checkout-modal').classList.add('hidden');
-}
-
-async function submitOrder(event) {
-  event.preventDefault();
-  const name = document.getElementById('cust-name').value.trim();
-  const phone = document.getElementById('cust-phone').value.trim();
-  const address = document.getElementById('cust-address').value.trim();
-
-  let total = 0;
-  let itemsText = cart.map(i => {
-    total += Number(i.price) * i.qty;
-    return `${i.name} (×${i.qty})`;
-  }).join(', ');
-
-  const merchantKey = cart[0]?.merchant || 'admin';
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'saveOrder');
-    formData.append('custName', name);
-    formData.append('custPhone', phone);
-    formData.append('custAddress', address);
-    formData.append('items', itemsText);
-    formData.append('total', total);
-    formData.append('merchant', merchantKey);
-
-    const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-    const res = await response.json();
-
-    if (res.status === 'success') {
-      showToast(`تم إرسال الطلب بنجاح! رقم الطلب: ${res.orderId}`, 'success');
-      cart = [];
-      closeCheckoutModal();
-      updateCartUI();
-    } else {
-      showToast('فشل حفظ الطلب', 'error');
-    }
-  } catch (e) {
-    showToast('حدث خطأ بالاتصال', 'error');
-  }
-}
-
-// 🔍 تتبع الطلبات
-async function trackOrder() {
-  const query = document.getElementById('track-input').value.trim();
-  const resultBox = document.getElementById('track-result');
-  if (!query) return showToast('أدخل رقم الهاتف أو رقم الطلب', 'warning');
-
-  resultBox.innerHTML = `<div class="text-center py-4 text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i> جاري البحث...</div>`;
-
-  try {
-    const response = await fetch(`${SCRIPT_URL}?action=getOrders`);
-    const orders = await response.json();
-    const found = orders.filter(o => String(o.custPhone) === query || String(o.orderId).toLowerCase() === query.toLowerCase());
-
-    if (found.length === 0) {
-      resultBox.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">لم يتم العثور على أي طلبات مطابقة.</div>`;
-      return;
-    }
-
-    resultBox.innerHTML = found.map(o => `
-      <div class="bg-black border border-gray-800 p-4 rounded-xl space-y-2 text-xs">
-        <div class="flex justify-between font-bold text-amber-400">
-          <span>رقم الطلب: ${escapeHTML(o.orderId)}</span>
-          <span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded">${escapeHTML(o.status)}</span>
-        </div>
-        <div class="text-gray-300">المنتجات: ${escapeHTML(o.items)}</div>
-        <div class="text-gray-400">الإجمالي: ${escapeHTML(o.total)} ج.م</div>
-        <div class="text-[10px] text-gray-500">التاريخ: ${escapeHTML(o.date)}</div>
-      </div>
-    `).join('');
-  } catch (e) {
-    resultBox.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">حدث خطأ في الاتصال.</div>`;
-  }
-}
-
-// 🔐 Login & Admin Systems
-function showLoginCard() {
-  document.getElementById('admin-login-card').classList.remove('hidden');
-  document.getElementById('master-panel').classList.add('hidden');
-  document.getElementById('merchant-panel').classList.add('hidden');
-}
-
-function switchLoginTab(tab) {
-  const usernameField = document.getElementById('login-username');
-  if (tab === 'admin') {
-    usernameField.classList.add('hidden');
-    usernameField.value = '';
-    document.getElementById('login-password').placeholder = 'كلمة سر الأدمن الرئيسي';
-  } else {
-    usernameField.classList.remove('hidden');
-    document.getElementById('login-password').placeholder = 'كلمة المرور';
-  }
-}
-
-async function loginAdmin(event) {
-  event.preventDefault();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-
-  if (!username) {
-    if (password === MASTER_PASSWORD) {
-      isMasterAdmin = true;
-      currentMerchant = null;
-      showToast('مرحباً بالأدمن الرئيسي', 'success');
-      renderMasterPanel();
-    } else {
-      showToast('كلمة السر غير صحيحة', 'error');
-    }
-    return;
-  }
-
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=loginMerchant&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-    const data = await res.json();
-    if (data.status === 'success') {
-      isMasterAdmin = false;
-      currentMerchant = data.username;
-      currentMerchantName = data.merchantName;
-      showToast(`أهلاً بك يا ${currentMerchantName}`, 'success');
-      renderMerchantPanel();
-    } else {
-      showToast('بيانات الدخول غير صحيحة', 'error');
-    }
-  } catch (e) {
-    showToast('خطأ في الاتصال', 'error');
-  }
-}
-
-function logoutAdmin() {
-  isMasterAdmin = false;
-  currentMerchant = null;
-  showLoginCard();
-  showToast('تم تسجيل الخروج', 'info');
-}
-
-async function renderMasterPanel() {
-  document.getElementById('admin-login-card').classList.add('hidden');
-  document.getElementById('master-panel').classList.remove('hidden');
-  
-  // جلب التجار والأوردرات للأدمن
-  try {
-    const mRes = await fetch(`${SCRIPT_URL}?action=getMerchants&masterPassword=${MASTER_PASSWORD}`);
-    merchantsCache = await mRes.json();
-    
-    const oRes = await fetch(`${SCRIPT_URL}?action=getOrders`);
-    const orders = await oRes.json();
-
-    const filterSelect = document.getElementById('admin-sales-merchant-filter');
-    filterSelect.innerHTML = `<option value="all">كل المبيعات والأوردرات (الكل)</option>` + 
-      merchantsCache.map(m => `<option value="${m.username}">${m.merchantName}</option>`).join('');
-
-    renderAdminOrdersTable(orders, 'all');
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-function filterAdminOrders(merchantVal) {
-  fetch(`${SCRIPT_URL}?action=getOrders`)
-    .then(res => res.json())
-    .then(orders => renderAdminOrdersTable(orders, merchantVal));
-}
-
-function renderAdminOrdersTable(orders, merchantFilter) {
-  const tableBody = document.getElementById('admin-orders-table-body');
-  const totalSalesEl = document.getElementById('admin-total-sales-val');
-  
-  let filtered = orders;
-  if (merchantFilter !== 'all') {
-    filtered = orders.filter(o => String(o.merchant) === String(merchantFilter));
-  }
-
-  let totalRevenue = filtered.reduce((acc, o) => acc + Number(o.total || 0), 0);
-  if (totalSalesEl) totalSalesEl.innerText = `${totalRevenue} ج.م`;
-
-  if (!tableBody) return;
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">لا توجد أوردرات.</td></tr>`;
-    return;
-  }
-
-  tableBody.innerHTML = filtered.map(o => `
-    <tr class="border-b border-gray-800">
-      <td class="p-3">${escapeHTML(o.orderId)}</td>
-      <td class="p-3">${escapeHTML(o.custName)} (${escapeHTML(o.custPhone)})</td>
-      <td class="p-3">${escapeHTML(o.items)}</td>
-      <td class="p-3 text-amber-400">${escapeHTML(o.total)} ج.م</td>
-      <td class="p-3">${escapeHTML(o.date)}</td>
-    </tr>
-  `).join('');
-}
-
-async function renderMerchantPanel() {
-  document.getElementById('admin-login-card').classList.add('hidden');
-  document.getElementById('merchant-panel').classList.remove('hidden');
-  document.getElementById('merchant-display-name').innerText = currentMerchantName;
-
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=getOrders`);
-    const orders = await res.json();
-    const myOrders = orders.filter(o => String(o.merchant) === String(currentMerchant));
-    
-    let totalSales = myOrders.reduce((acc, o) => acc + Number(o.total || 0), 0);
-    document.getElementById('merchant-total-sales').innerText = `${totalSales} ج.م`;
-    document.getElementById('merchant-orders-count').innerText = myOrders.length;
-  } catch (e) {}
-}
-
-async function addNewProductAsAdmin(event) {
-  event.preventDefault();
-  const name = document.getElementById('admin-p-name').value.trim();
-  const price = document.getElementById('admin-p-price').value;
-  const category = document.getElementById('admin-p-category').value.trim() || 'عام';
-  const desc = document.getElementById('admin-p-desc').value.trim();
-  const imgUrl = getProductImgUrl('admin-p-img');
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'addProduct');
-    formData.append('name', name);
-    formData.append('price', price);
-    formData.append('category', category);
-    formData.append('img', imgUrl);
-    formData.append('desc', desc);
-    formData.append('merchant', document.getElementById('admin-p-merchant')?.value || '');
-
-    const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-    const result = await res.json();
-    if (result.status === 'success') {
-      showToast('تم حفظ المنتج بنجاح', 'success');
-      event.target.reset();
-    } else {
-      showToast('فشل حفظ المنتج', 'error');
-    }
-  } catch (e) {
-    showToast('خطأ في الاتصال', 'error');
-  }
-}
-
-async function addNewProduct(event) {
-  event.preventDefault();
-  const name = document.getElementById('new-p-name').value.trim();
-  const price = document.getElementById('new-p-price').value;
-  const category = document.getElementById('new-p-category').value.trim() || 'عام';
-  const desc = document.getElementById('new-p-desc').value.trim();
-  const imgUrl = getProductImgUrl('new-p-img');
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'addProduct');
-    formData.append('name', name);
-    formData.append('price', price);
-    formData.append('category', category);
-    formData.append('img', imgUrl);
-    formData.append('desc', desc);
-    formData.append('merchant', currentMerchant);
-
-    const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-    const result = await res.json();
-    if (result.status === 'success') {
-      showToast('تم اضافة المنتج لمتجرك بنجاح', 'success');
-      event.target.reset();
-    } else {
-      showToast('فشل الحفظ', 'error');
-    }
-  } catch (e) {
-    showToast('خطأ بالاتصال', 'error');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadCloudProducts();
-});
+    <script src="app.js?v=5.0"></script>
+</body>
+</html>
